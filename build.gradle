@@ -17,13 +17,7 @@ repositories {
     jcenter()
 }
 
-configurations {
-    compileOnly
-    compileOnly.extendsFrom compile
-}
-
 dependencies {
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.16.10'
     compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
     compile group: 'org.liquibase', name: 'liquibase-core', version: '3.5.2'
 
@@ -34,7 +28,7 @@ dependencies {
 }
 
 task copyDeps(type: Copy) {
-    from(configurations.compile - configurations.compileOnly)
+    from configurations.compile
     into "${project.buildDir}/libs"
     with jar
 }
@@ -42,7 +36,7 @@ task copyDeps(type: Copy) {
 task fatJar(type: Jar) {
     baseName = project.name + '-all'
     from {
-        (configurations.compile - configurations.compileOnly).collect {
+        configurations.compile {
             it.isDirectory() ? it : zipTree(it)
         }
     }
