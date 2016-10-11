@@ -2,19 +2,36 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.14'
 }
 
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+    }
+}
+
 apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+defaultTasks 'clean', 'build'
 
 group = 'pl.coffeepower.guiceliquibase'
+version = new File('version.txt').text
 
 compileJava {
-    options.encoding = 'UTF-8'
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+    options.encoding = 'UTF-8'
 }
+
 
 repositories {
     mavenCentral()
     jcenter()
+    mavenLocal()
 }
 
 dependencies {
@@ -25,20 +42,4 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
     testCompile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.4'
-}
-
-task copyDeps(type: Copy) {
-    from configurations.compile
-    into "${project.buildDir}/libs"
-    with jar
-}
-
-task fatJar(type: Jar) {
-    baseName = project.name + '-all'
-    from {
-        configurations.compile {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
-    with jar
 }
