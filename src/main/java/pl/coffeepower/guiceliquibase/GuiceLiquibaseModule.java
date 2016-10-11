@@ -4,7 +4,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 
 import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
-import pl.coffeepower.guiceliquibase.annotation.LiquibaseDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,7 +12,6 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 import javax.inject.Inject;
-import javax.sql.DataSource;
 
 import liquibase.Contexts;
 import liquibase.LabelExpression;
@@ -32,7 +30,6 @@ import liquibase.util.LiquibaseUtil;
 public final class GuiceLiquibaseModule extends AbstractModule {
 
     protected void configure() {
-        requireBinding(Key.get(DataSource.class, LiquibaseDataSource.class));
         requireBinding(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class));
         bind(GuiceLiquibase.class).asEagerSingleton();
         requestInjection(this);
@@ -52,32 +49,14 @@ public final class GuiceLiquibaseModule extends AbstractModule {
         private static final Logger LOGGER = Logger.getLogger(GuiceLiquibase.class.getName());
         private static volatile boolean INITIALIZED = false;
         private static volatile boolean UPDATED = false;
-        private final DataSource dataSource;
         private final GuiceLiquibaseConfig config;
         private final ClassLoaderResourceAccessor resourceAccessor =
                 new ClassLoaderResourceAccessor(this.getClass().getClassLoader());
 
         @Inject
-        private GuiceLiquibase(@LiquibaseDataSource DataSource dataSource,
-                               @LiquibaseConfig GuiceLiquibaseConfig config) {
+        private GuiceLiquibase(@LiquibaseConfig GuiceLiquibaseConfig config) {
             LOGGER.info("Creating GuiceLiquibase for Liquibase " + LiquibaseUtil.getBuildVersion());
-            this.dataSource = Objects.requireNonNull(dataSource, "Injected DataSource cannot be null.");
             this.config = Objects.requireNonNull(config, "Injected GuiceLiquibaseConfig cannot be null.");
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(dataSource, config, resourceAccessor);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            GuiceLiquibase that = (GuiceLiquibase) o;
-            return Objects.equals(dataSource, that.dataSource) &&
-                    Objects.equals(config, that.config) &&
-                    Objects.equals(resourceAccessor, that.resourceAccessor);
         }
 
         private void executeUpdate() throws LiquibaseException {
@@ -94,10 +73,10 @@ public final class GuiceLiquibaseModule extends AbstractModule {
                     return;
                 }
                 INITIALIZED = true;
-                Connection connection = null;
                 Database database = null;
                 try {
-                    connection = dataSource.getConnection();
+                    Connection connection = Objects.requireNonNull(config.getDataSource(), "DataSource must be defined.")
+                            .getConnection();
                     JdbcConnection jdbcConnection = new JdbcConnection(Objects.requireNonNull(connection,
                             "DataSource returns null connection instance."));
                     database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(jdbcConnection);
@@ -114,13 +93,6 @@ public final class GuiceLiquibaseModule extends AbstractModule {
                 } finally {
                     if (database != null) {
                         database.close();
-                    } else if (connection != null) {
-                        try {
-                            connection.rollback();
-                            connection.close();
-                        } catch (SQLException e) {
-                            LOGGER.severe("Problem while rollback and closing Connection.");
-                        }
                     }
                 }
             } else {

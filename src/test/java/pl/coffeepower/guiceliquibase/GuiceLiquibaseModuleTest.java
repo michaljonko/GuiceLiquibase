@@ -3,27 +3,38 @@ package pl.coffeepower.guiceliquibase;
 import com.google.inject.AbstractModule;
 import com.google.inject.CreationException;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 
 import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
-import pl.coffeepower.guiceliquibase.annotation.LiquibaseDataSource;
 
-import java.sql.DriverManager;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import javax.sql.DataSource;
 
-import static org.mockito.Mockito.mock;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
-@RunWith(MockitoJUnitRunner.class)
 public class GuiceLiquibaseModuleTest {
 
     private final Fixtures fixtures = new Fixtures();
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        try {
+            Class.forName("org.hsqldb.jdbc.JDBCDriver");
+        } catch (ClassNotFoundException e) {
+            throw new java.lang.NoClassDefFoundError("Cannot find org.hsqldb.jdbc.JDBCDriver");
+        }
+    }
 
     @Test(expected = CreationException.class)
     public void shouldThrowExceptionForNotDefinedImplementations() throws Exception {
@@ -31,56 +42,63 @@ public class GuiceLiquibaseModuleTest {
     }
 
     @Test
-    public void shouldUpdateDatabase() throws Exception {
-        Guice.createInjector(fixtures.hsqldbModule, new GuiceLiquibaseModule());
+    public void shouldExecuteLiquibaseUpdate() throws Exception {
+        Injector injector = Guice.createInjector(fixtures.singleDataSourceModule, new GuiceLiquibaseModule());
+
+        DataSource dataSource = injector.getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
+                .getDataSource();
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(fixtures.getAllQuery)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    assertThat(resultSet.next(), is(true));
+                    assertThat(resultSet.getInt(fixtures.idColumnName), is(fixtures.expectedId));
+                    assertThat(resultSet.getString(fixtures.nameColumnName), is(fixtures.expectedName));
+                    assertThat(resultSet.getBoolean(fixtures.activeColumnName), is(fixtures.expectedActive));
+                    assertThat(resultSet.next(), is(false));
+                }
+            }
+        }
     }
 
     private static final class Fixtures {
-        private final DataSource dataSource = mock(DataSource.class);
-        private final GuiceLiquibaseConfig guiceLiquibaseConfig = GuiceLiquibaseConfig.Builder.aConfig().build();
-        private final Module properModule = new AbstractModule() {
-
-            @Override
-            protected void configure() {
-            }
-
-            @Provides
-            @LiquibaseDataSource
-            private DataSource createDataSource() {
-                return dataSource;
-            }
+        private final String jdbcUrl = "jdbc:hsqldb:mem:mymemdb";
+        private final String jdbcUser = "SA";
+        private final Module singleDataSourceModule = new AbstractModule() {
 
             @Provides
             @LiquibaseConfig
             private GuiceLiquibaseConfig createConfig() {
-                return guiceLiquibaseConfig;
-            }
-        };
-        private final Module hsqldbModule = new AbstractModule() {
-
-            @Override
-            protected void configure() {
-                try {
-                    Class.forName("org.hsqldb.jdbc.JDBCDriver");
-                } catch (ClassNotFoundException e) {
-                    throw new java.lang.NoClassDefFoundError("Cannot find org.hsqldb.jdbc.JDBCDriver");
-                }
-            }
-
-            @Provides
-            @LiquibaseDataSource
-            private DataSource createDataSource() {
                 JDBCDataSource dataSource = new JDBCDataSource();
-                dataSource.setDatabase("jdbc:hsqldb:mem:mymemdb");
-                dataSource.setUser("SA");
-                return dataSource;
+                dataSource.setDatabase(jdbcUrl);
+                dataSource.setUser(jdbcUser);
+                return GuiceLiquibaseConfig.Builder.aConfig(dataSource).build();
             }
+
+            @Override
+            protected void configure() {
+            }
+        };
+        private final Module multiDataSourceModule = new AbstractModule() {
 
             @Provides
             @LiquibaseConfig
             private GuiceLiquibaseConfig createConfig() {
-                return guiceLiquibaseConfig;
+                JDBCDataSource dataSource = new JDBCDataSource();
+                dataSource.setDatabase(jdbcUrl);
+                dataSource.setUser(jdbcUser);
+                return GuiceLiquibaseConfig.Builder.aConfig(dataSource).build();
+            }
+
+            @Override
+            protected void configure() {
             }
         };
+        private final String getAllQuery = "SELECT * FROM table_for_tests";
+        private final String idColumnName = "id";
+        private final String nameColumnName = "name";
+        private final String activeColumnName = "active";
+        private final int expectedId = 1;
+        private final String expectedName = "test";
+        private final boolean expectedActive = true;
     }
 }
