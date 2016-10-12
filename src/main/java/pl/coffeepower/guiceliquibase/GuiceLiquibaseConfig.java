@@ -36,8 +36,9 @@ public final class GuiceLiquibaseConfig {
             return new Builder(dataSource);
         }
 
-        public void withChangeLog(String changeLog) {
+        public Builder withChangeLog(String changeLog) {
             this.changeLogPath = changeLog;
+            return this;
         }
 
         public GuiceLiquibaseConfig build() {
