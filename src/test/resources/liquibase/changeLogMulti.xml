@@ -6,7 +6,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet id="1" author="tester">
-        <createTable tableName="multi_test">
+        <createTable tableName="table_for_multi_test">
             <column name="id" type="int">
                 <constraints primaryKey="true" nullable="false"/>
             </column>

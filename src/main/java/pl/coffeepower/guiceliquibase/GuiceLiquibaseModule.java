@@ -1,15 +1,15 @@
 package pl.coffeepower.guiceliquibase;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
-import com.google.inject.AbstractModule;
 import com.google.inject.Key;
+import com.google.inject.PrivateModule;
 import com.google.inject.multibindings.Multibinder;
-
-import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -31,10 +31,10 @@ import liquibase.util.LiquibaseUtil;
 
 import static java.util.Objects.requireNonNull;
 
-public final class GuiceLiquibaseModule extends AbstractModule /*PrivateModule*/ {
+public final class GuiceLiquibaseModule extends PrivateModule {
 
     private static final Key<GuiceLiquibaseConfig> LIQUIBASE_CONFIG_KEY =
-            Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class);
+            Key.get(GuiceLiquibaseConfig.class);
 
     protected void configure() {
         requireBinding(LIQUIBASE_CONFIG_KEY);
@@ -64,7 +64,7 @@ public final class GuiceLiquibaseModule extends AbstractModule /*PrivateModule*/
                 new ClassLoaderResourceAccessor(this.getClass().getClassLoader());
 
         @Inject
-        private GuiceLiquibase(Set<GuiceLiquibaseConfig> configs) {
+        GuiceLiquibase(Set<GuiceLiquibaseConfig> configs) {
             LOGGER.info("Creating GuiceLiquibase for Liquibase "
                     + LiquibaseUtil.getBuildVersion());
             Preconditions.checkArgument(configs != null && !configs.isEmpty(),
@@ -72,7 +72,7 @@ public final class GuiceLiquibaseModule extends AbstractModule /*PrivateModule*/
             this.configs = configs;
         }
 
-        private void executeUpdate() throws LiquibaseException {
+        void executeUpdate() throws LiquibaseException {
             if (UPDATED) {
                 LOGGER.warning("Liquibase update is already executed with success.");
                 return;
@@ -90,6 +90,7 @@ public final class GuiceLiquibaseModule extends AbstractModule /*PrivateModule*/
                 }
                 INITIALIZED = true;
                 for (GuiceLiquibaseConfig config : configs) {
+                    LOGGER.info("Applying changes for " + config.toString());
                     Database database = null;
                     try {
                         Connection connection = requireNonNull(config.getDataSource(), "DataSource must be defined.")
@@ -116,6 +117,28 @@ public final class GuiceLiquibaseModule extends AbstractModule /*PrivateModule*/
             } else {
                 LOGGER.warning("GuiceLiquibase has been INITIALIZED and executed.");
             }
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(configs, resourceAccessor);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            GuiceLiquibase that = (GuiceLiquibase) o;
+            return Objects.equals(configs, that.configs) &&
+                    Objects.equals(resourceAccessor, that.resourceAccessor);
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("configs", configs)
+                    .add("resourceAccessor", resourceAccessor)
+                    .toString();
         }
     }
 }
