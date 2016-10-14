@@ -4,18 +4,19 @@ import com.google.inject.AbstractModule;
 import com.google.inject.CreationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
-
 import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
-import javax.sql.DataSource;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -33,6 +34,15 @@ public class GuiceLiquibaseModuleTest {
         }
     }
 
+    @Before
+    public void setUp() throws Exception {
+        try (Connection connection = Fixtures.createJdbcDataSource("jdbc:hsqldb:mem:memdb").getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement("TRUNCATE SCHEMA PUBLIC RESTART IDENTITY AND COMMIT NO CHECK")) {
+                statement.execute();
+            }
+        }
+    }
+
     @Test(expected = CreationException.class)
     public void shouldThrowExceptionForNotDefinedImplementations() throws Exception {
         Guice.createInjector(new GuiceLiquibaseModule());
@@ -40,11 +50,12 @@ public class GuiceLiquibaseModuleTest {
 
     @Test
     public void shouldExecuteLiquibaseUpdateWithSingleConfiguration() throws Exception {
-        Injector injector = Guice.createInjector(new GuiceLiquibaseModule(),
+        Injector injector = Guice.createInjector(
+                new GuiceLiquibaseModule(),
                 fixtures.singleDataSourceModule);
 
-        DataSource dataSource = injector.getInstance(GuiceLiquibaseConfig.class)
-                .getDataSource();
+        DataSource dataSource = injector.getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
+                .getConfigs().iterator().next().getDataSource();
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement preparedStatement = connection.prepareStatement(fixtures.getAllQuery)) {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -60,18 +71,21 @@ public class GuiceLiquibaseModuleTest {
 
     @Test
     public void shouldExecuteLiquibaseUpdateWithMultipleConfigurations() throws Exception {
-        Guice.createInjector(new GuiceLiquibaseModule(),
-                fixtures.firstDataSourceModule,
-                fixtures.secondDataSourceModule);
+        Guice.createInjector(
+                new GuiceLiquibaseModule(),
+                fixtures.multiDataSourceModule);
     }
 
     private static final class Fixtures {
         private final Module singleDataSourceModule = new AbstractModule() {
 
             @Provides
+            @LiquibaseConfig
             private GuiceLiquibaseConfig createConfig() {
                 return GuiceLiquibaseConfig.Builder
-                        .aConfig(createJdbcDataSource("jdbc:hsqldb:mem:singleDb"))
+                        .aConfigSet()
+                        .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
+                                createJdbcDataSource("jdbc:hsqldb:mem:memdb"), null))
                         .build();
             }
 
@@ -79,27 +93,17 @@ public class GuiceLiquibaseModuleTest {
             protected void configure() {
             }
         };
-        private final Module firstDataSourceModule = new AbstractModule() {
+        private final Module multiDataSourceModule = new AbstractModule() {
 
             @Provides
+            @LiquibaseConfig
             private GuiceLiquibaseConfig createConfig() {
                 return GuiceLiquibaseConfig.Builder
-                        .aConfig(createJdbcDataSource("jdbc:hsqldb:mem:firstDb"))
-                        .withChangeLog("liquibase/emptyChangeLog.xml")
-                        .build();
-            }
-
-            @Override
-            protected void configure() {
-            }
-        };
-        private final Module secondDataSourceModule = new AbstractModule() {
-
-            @Provides
-            private GuiceLiquibaseConfig createConfig() {
-                return GuiceLiquibaseConfig.Builder
-                        .aConfig(createJdbcDataSource("jdbc:hsqldb:mem:secondDb"))
-                        .withChangeLog("liquibase/changeLogMulti.xml")
+                        .aConfigSet()
+                        .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
+                                createJdbcDataSource("jdbc:hsqldb:mem:memdb"), "liquibase/emptyChangeLog.xml"))
+                        .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
+                                createJdbcDataSource("jdbc:hsqldb:mem:memdb"), "liquibase/changeLogMulti.xml"))
                         .build();
             }
 
