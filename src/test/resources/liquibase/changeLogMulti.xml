@@ -15,4 +15,10 @@
             </column>
         </createTable>
     </changeSet>
+    <changeSet id="2" author="tester">
+        <insert tableName="table_for_multi_test">
+            <column name="id" value="1"/>
+            <column name="name" value="test"/>
+        </insert>
+    </changeSet>
 </databaseChangeLog>

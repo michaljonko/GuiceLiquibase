@@ -1,20 +1,20 @@
 package pl.coffeepower.guiceliquibase;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 
 import javax.sql.DataSource;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public final class GuiceLiquibaseConfig implements Serializable {
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-    private static final long serialVersionUID = -7299278874840015843L;
+public final class GuiceLiquibaseConfig {
+
     private final ImmutableSet<LiquibaseConfig> configs;
 
     private GuiceLiquibaseConfig(Collection<LiquibaseConfig> configs) {
@@ -45,17 +45,21 @@ public final class GuiceLiquibaseConfig implements Serializable {
                 .toString();
     }
 
-    public static final class LiquibaseConfig implements Serializable {
+    public static final class LiquibaseConfig {
 
         public static final String DEFAULT_CHANGE_LOG_PATH = "liquibase/changeLog.xml";
-        private static final long serialVersionUID = 896869151897407896L;
         private final DataSource dataSource;
         private final String changeLogPath;
         private final int hash;
 
+        public LiquibaseConfig(DataSource dataSource) {
+            this(dataSource, DEFAULT_CHANGE_LOG_PATH);
+        }
+
         public LiquibaseConfig(DataSource dataSource, String changeLogPath) {
-            this.dataSource = Preconditions.checkNotNull(dataSource, "dataSource must be defined.");
-            this.changeLogPath = Strings.isNullOrEmpty(changeLogPath) ? DEFAULT_CHANGE_LOG_PATH : changeLogPath;
+            this.dataSource = checkNotNull(dataSource, "dataSource must be defined.");
+            checkArgument(!Strings.isNullOrEmpty(changeLogPath), "changeLogPath must be defined.");
+            this.changeLogPath = changeLogPath;
             this.hash = Objects.hash(this.dataSource, this.changeLogPath);
         }
 
@@ -101,13 +105,13 @@ public final class GuiceLiquibaseConfig implements Serializable {
         }
 
         public Builder withLiquibaseConfig(LiquibaseConfig config) {
-            Preconditions.checkNotNull(config);
+            checkNotNull(config);
             configs.add(config);
             return this;
         }
 
         public Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
-            Preconditions.checkNotNull(configs);
+            checkNotNull(configs);
             this.configs.addAll(configs);
             return this;
         }
