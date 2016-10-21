@@ -1,17 +1,16 @@
 package pl.coffeepower.guiceliquibase;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 
-import javax.sql.DataSource;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.sql.DataSource;
 
 public final class GuiceLiquibaseConfig {
 
@@ -26,10 +25,14 @@ public final class GuiceLiquibaseConfig {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        GuiceLiquibaseConfig that = (GuiceLiquibaseConfig) o;
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        GuiceLiquibaseConfig that = (GuiceLiquibaseConfig) obj;
         return Objects.equals(configs, that.configs);
     }
 
@@ -57,8 +60,9 @@ public final class GuiceLiquibaseConfig {
         }
 
         public LiquibaseConfig(DataSource dataSource, String changeLogPath) {
-            this.dataSource = checkNotNull(dataSource, "dataSource must be defined.");
-            checkArgument(!Strings.isNullOrEmpty(changeLogPath), "changeLogPath must be defined.");
+            this.dataSource = Preconditions.checkNotNull(dataSource, "dataSource must be defined.");
+            Preconditions.checkArgument(
+                    !Strings.isNullOrEmpty(changeLogPath), "changeLogPath must be defined.");
             this.changeLogPath = changeLogPath;
             this.hash = Objects.hash(this.dataSource, this.changeLogPath);
         }
@@ -72,12 +76,16 @@ public final class GuiceLiquibaseConfig {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            LiquibaseConfig that = (LiquibaseConfig) o;
-            return Objects.equals(dataSource, that.dataSource) &&
-                    Objects.equals(changeLogPath, that.changeLogPath);
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            LiquibaseConfig that = (LiquibaseConfig) obj;
+            return Objects.equals(dataSource, that.dataSource)
+                    && Objects.equals(changeLogPath, that.changeLogPath);
         }
 
         @Override
@@ -100,18 +108,18 @@ public final class GuiceLiquibaseConfig {
         private Builder() {
         }
 
-        public static Builder aConfigSet() {
+        public static Builder createConfigSet() {
             return new Builder();
         }
 
         public Builder withLiquibaseConfig(LiquibaseConfig config) {
-            checkNotNull(config);
+            Preconditions.checkNotNull(config);
             configs.add(config);
             return this;
         }
 
         public Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
-            checkNotNull(configs);
+            Preconditions.checkNotNull(configs);
             this.configs.addAll(configs);
             return this;
         }
@@ -121,10 +129,14 @@ public final class GuiceLiquibaseConfig {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Builder builder = (Builder) o;
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            Builder builder = (Builder) obj;
             return Objects.equals(configs, builder.configs);
         }
 

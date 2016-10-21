@@ -83,7 +83,7 @@ public class GuiceLiquibaseModuleTest {
                     protected void configure() {
                         bind(GuiceLiquibaseConfig.class).annotatedWith(LiquibaseConfig.class).toInstance(
                                 GuiceLiquibaseConfig.Builder
-                                        .aConfigSet()
+                                        .createConfigSet()
                                         .build());
                     }
                 });
@@ -93,7 +93,7 @@ public class GuiceLiquibaseModuleTest {
     public void shouldThrowExceptionForNotDefinedDataSourceConnection() throws Exception {
         when(dataSource.getConnection()).thenReturn(null);
         GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
-                .aConfigSet()
+                .createConfigSet()
                 .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(dataSource))
                 .build();
 
@@ -157,7 +157,7 @@ public class GuiceLiquibaseModuleTest {
             @LiquibaseConfig
             private GuiceLiquibaseConfig createConfig() {
                 return GuiceLiquibaseConfig.Builder
-                        .aConfigSet()
+                        .createConfigSet()
                         .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
                                 createJdbcDataSource("jdbc:hsqldb:mem:memdb")))
                         .build();
@@ -173,7 +173,7 @@ public class GuiceLiquibaseModuleTest {
             @LiquibaseConfig
             private GuiceLiquibaseConfig createConfig() {
                 return GuiceLiquibaseConfig.Builder
-                        .aConfigSet()
+                        .createConfigSet()
                         .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
                                 createJdbcDataSource("jdbc:hsqldb:mem:memdb"), "liquibase/emptyChangeLog.xml"))
                         .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(

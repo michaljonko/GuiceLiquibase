@@ -26,7 +26,7 @@ public class GuiceLiquibaseConfigTest {
     @Test
     public void shouldCreateEmptyConfig() throws Exception {
         GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
-                .aConfigSet()
+                .createConfigSet()
                 .build();
         assertThat(config, notNullValue());
         assertThat(config.getConfigs(), empty());
@@ -35,7 +35,7 @@ public class GuiceLiquibaseConfigTest {
     @Test
     public void shouldCreateEmptyConfigs() throws Exception {
         GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
-                .aConfigSet()
+                .createConfigSet()
                 .withLiquibaseConfigs(Collections.emptyList())
                 .build();
         assertThat(config, notNullValue());
@@ -46,7 +46,7 @@ public class GuiceLiquibaseConfigTest {
     public void shouldCreateConfig() throws Exception {
         GuiceLiquibaseConfig.LiquibaseConfig liquibaseConfig = new GuiceLiquibaseConfig.LiquibaseConfig(dataSource);
         GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
-                .aConfigSet()
+                .createConfigSet()
                 .withLiquibaseConfig(liquibaseConfig)
                 .build();
         assertThat(config, notNullValue());
@@ -56,7 +56,7 @@ public class GuiceLiquibaseConfigTest {
     @Test
     public void shouldThrowExceptionForNotDefinedConfig() throws Exception {
         expectedException.expect(NullPointerException.class);
-        GuiceLiquibaseConfig.Builder.aConfigSet()
+        GuiceLiquibaseConfig.Builder.createConfigSet()
                 .withLiquibaseConfig(null)
                 .build();
 
@@ -65,7 +65,7 @@ public class GuiceLiquibaseConfigTest {
     @Test
     public void shouldThrowExceptionForNotDefinedConfigs() throws Exception {
         expectedException.expect(NullPointerException.class);
-        GuiceLiquibaseConfig.Builder.aConfigSet()
+        GuiceLiquibaseConfig.Builder.createConfigSet()
                 .withLiquibaseConfigs(null)
                 .build();
 
