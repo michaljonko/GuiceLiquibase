@@ -7,6 +7,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -16,12 +17,14 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
 import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+
+import javax.sql.DataSource;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -118,12 +121,12 @@ public class GuiceLiquibaseModuleTest {
         DataSource dataSource = injector.getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
                 .getConfigs().iterator().next().getDataSource();
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(fixtures.getAllFromTableForTestQuery)) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(Fixtures.GET_ALL_FROM_TABLE_FOR_TEST_QUERY)) {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     assertThat(resultSet.next(), is(true));
-                    assertThat(resultSet.getInt(fixtures.idColumnName), is(fixtures.expectedId));
-                    assertThat(resultSet.getString(fixtures.nameColumnName), is(fixtures.expectedName));
-                    assertThat(resultSet.getBoolean(fixtures.activeColumnName), is(fixtures.expectedActive));
+                    assertThat(resultSet.getInt(Fixtures.ID_COLUMN_NAME), is(Fixtures.EXPECTED_ID));
+                    assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME), is(Fixtures.EXPECTED_NAME));
+                    assertThat(resultSet.getBoolean(Fixtures.ACTIVE_COLUMN_NAME), is(Fixtures.EXPECTED_ACTIVE));
                     assertThat(resultSet.next(), is(false));
                 }
             }
@@ -139,11 +142,11 @@ public class GuiceLiquibaseModuleTest {
         DataSource dataSource = injector.getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
                 .getConfigs().iterator().next().getDataSource();
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(fixtures.getAllFromTableForMultiTestsQuery)) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(Fixtures.GET_ALL_FROM_TABLE_FOR_MULTI_TESTS_QUERY)) {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     assertThat(resultSet.next(), is(true));
-                    assertThat(resultSet.getInt(fixtures.idColumnName), is(fixtures.expectedId));
-                    assertThat(resultSet.getString(fixtures.nameColumnName), is(fixtures.expectedName));
+                    assertThat(resultSet.getInt(Fixtures.ID_COLUMN_NAME), is(Fixtures.EXPECTED_ID));
+                    assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME), is(Fixtures.EXPECTED_NAME));
                     assertThat(resultSet.next(), is(false));
                 }
             }
@@ -151,6 +154,14 @@ public class GuiceLiquibaseModuleTest {
     }
 
     private static final class Fixtures {
+        private static final String ID_COLUMN_NAME = "id";
+        private static final String NAME_COLUMN_NAME = "name";
+        private static final String ACTIVE_COLUMN_NAME = "active";
+        private static final String EXPECTED_NAME = "test";
+        private static final String GET_ALL_FROM_TABLE_FOR_TEST_QUERY = "SELECT * FROM table_for_test";
+        private static final String GET_ALL_FROM_TABLE_FOR_MULTI_TESTS_QUERY = "SELECT * FROM table_for_multi_test";
+        private static final int EXPECTED_ID = 1;
+        private static final boolean EXPECTED_ACTIVE = true;
         private final Module singleDataSourceModule = new AbstractModule() {
 
             @Provides
@@ -185,14 +196,6 @@ public class GuiceLiquibaseModuleTest {
             protected void configure() {
             }
         };
-        private final String getAllFromTableForTestQuery = "SELECT * FROM table_for_test";
-        private final String getAllFromTableForMultiTestsQuery = "SELECT * FROM table_for_multi_test";
-        private final String idColumnName = "id";
-        private final String nameColumnName = "name";
-        private final String activeColumnName = "active";
-        private final int expectedId = 1;
-        private final String expectedName = "test";
-        private final boolean expectedActive = true;
 
         private static JDBCDataSource createJdbcDataSource(String jdbcUrl) {
             JDBCDataSource dataSource = new JDBCDataSource();
