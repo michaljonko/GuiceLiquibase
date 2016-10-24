@@ -45,14 +45,16 @@ public class GuiceLiquibaseModuleTest {
         try {
             Class.forName("org.hsqldb.jdbc.JDBCDriver");
         } catch (ClassNotFoundException e) {
-            throw new java.lang.NoClassDefFoundError("Cannot find org.hsqldb.jdbc.JDBCDriver");
+            throw new NoClassDefFoundError("Cannot find org.hsqldb.jdbc.JDBCDriver");
         }
     }
 
     @Before
     public void setUp() throws Exception {
-        try (Connection connection = Fixtures.createJdbcDataSource("jdbc:hsqldb:mem:memdb").getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement("TRUNCATE SCHEMA PUBLIC RESTART IDENTITY AND COMMIT NO CHECK")) {
+        try (Connection connection =
+                     Fixtures.createJdbcDataSource("jdbc:hsqldb:mem:memdb").getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "TRUNCATE SCHEMA PUBLIC RESTART IDENTITY AND COMMIT NO CHECK")) {
                 statement.execute();
             }
         }
@@ -71,7 +73,9 @@ public class GuiceLiquibaseModuleTest {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(GuiceLiquibaseConfig.class).annotatedWith(LiquibaseConfig.class).toInstance(null);
+                        bind(GuiceLiquibaseConfig.class)
+                                .annotatedWith(LiquibaseConfig.class)
+                                .toInstance(null);
                     }
                 });
     }
@@ -84,10 +88,12 @@ public class GuiceLiquibaseModuleTest {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(GuiceLiquibaseConfig.class).annotatedWith(LiquibaseConfig.class).toInstance(
-                                GuiceLiquibaseConfig.Builder
-                                        .createConfigSet()
-                                        .build());
+                        bind(GuiceLiquibaseConfig.class)
+                                .annotatedWith(LiquibaseConfig.class)
+                                .toInstance(
+                                        GuiceLiquibaseConfig.Builder
+                                                .createConfigSet()
+                                                .build());
                     }
                 });
     }
@@ -101,13 +107,16 @@ public class GuiceLiquibaseModuleTest {
                 .build();
 
         expectedException.expect(CreationException.class);
-        expectedException.expectMessage(containsString("DataSource returns null connection instance."));
+        expectedException.expectMessage(
+                containsString("DataSource returns null connection instance."));
 
         Guice.createInjector(new GuiceLiquibaseModule(),
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(GuiceLiquibaseConfig.class).annotatedWith(LiquibaseConfig.class).toInstance(config);
+                        bind(GuiceLiquibaseConfig.class)
+                                .annotatedWith(LiquibaseConfig.class)
+                                .toInstance(config);
                     }
                 });
     }
@@ -118,15 +127,19 @@ public class GuiceLiquibaseModuleTest {
                 new GuiceLiquibaseModule(),
                 fixtures.singleDataSourceModule);
 
-        DataSource dataSource = injector.getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
+        DataSource dataSource = injector
+                .getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
                 .getConfigs().iterator().next().getDataSource();
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(Fixtures.GET_ALL_FROM_TABLE_FOR_TEST_QUERY)) {
+            try (PreparedStatement preparedStatement =
+                         connection.prepareStatement(Fixtures.GET_ALL_FROM_TABLE_FOR_TEST_QUERY)) {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     assertThat(resultSet.next(), is(true));
                     assertThat(resultSet.getInt(Fixtures.ID_COLUMN_NAME), is(Fixtures.EXPECTED_ID));
-                    assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME), is(Fixtures.EXPECTED_NAME));
-                    assertThat(resultSet.getBoolean(Fixtures.ACTIVE_COLUMN_NAME), is(Fixtures.EXPECTED_ACTIVE));
+                    assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME),
+                            is(Fixtures.EXPECTED_NAME));
+                    assertThat(resultSet.getBoolean(Fixtures.ACTIVE_COLUMN_NAME),
+                            is(Fixtures.EXPECTED_ACTIVE));
                     assertThat(resultSet.next(), is(false));
                 }
             }
@@ -139,14 +152,17 @@ public class GuiceLiquibaseModuleTest {
                 new GuiceLiquibaseModule(),
                 fixtures.multiDataSourceModule);
 
-        DataSource dataSource = injector.getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
+        DataSource dataSource = injector
+                .getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
                 .getConfigs().iterator().next().getDataSource();
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement preparedStatement = connection.prepareStatement(Fixtures.GET_ALL_FROM_TABLE_FOR_MULTI_TESTS_QUERY)) {
+            try (PreparedStatement preparedStatement = connection.prepareStatement(
+                    Fixtures.GET_ALL_FROM_TABLE_FOR_MULTI_TESTS_QUERY)) {
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     assertThat(resultSet.next(), is(true));
                     assertThat(resultSet.getInt(Fixtures.ID_COLUMN_NAME), is(Fixtures.EXPECTED_ID));
-                    assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME), is(Fixtures.EXPECTED_NAME));
+                    assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME),
+                            is(Fixtures.EXPECTED_NAME));
                     assertThat(resultSet.next(), is(false));
                 }
             }
@@ -158,8 +174,10 @@ public class GuiceLiquibaseModuleTest {
         private static final String NAME_COLUMN_NAME = "name";
         private static final String ACTIVE_COLUMN_NAME = "active";
         private static final String EXPECTED_NAME = "test";
-        private static final String GET_ALL_FROM_TABLE_FOR_TEST_QUERY = "SELECT * FROM table_for_test";
-        private static final String GET_ALL_FROM_TABLE_FOR_MULTI_TESTS_QUERY = "SELECT * FROM table_for_multi_test";
+        private static final String GET_ALL_FROM_TABLE_FOR_TEST_QUERY =
+                "SELECT * FROM table_for_test";
+        private static final String GET_ALL_FROM_TABLE_FOR_MULTI_TESTS_QUERY =
+                "SELECT * FROM table_for_multi_test";
         private static final int EXPECTED_ID = 1;
         private static final boolean EXPECTED_ACTIVE = true;
         private final Module singleDataSourceModule = new AbstractModule() {
@@ -186,9 +204,11 @@ public class GuiceLiquibaseModuleTest {
                 return GuiceLiquibaseConfig.Builder
                         .createConfigSet()
                         .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
-                                createJdbcDataSource("jdbc:hsqldb:mem:memdb"), "liquibase/emptyChangeLog.xml"))
+                                createJdbcDataSource(
+                                        "jdbc:hsqldb:mem:memdb"), "liquibase/emptyChangeLog.xml"))
                         .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
-                                createJdbcDataSource("jdbc:hsqldb:mem:memdb"), "liquibase/changeLogMulti.xml"))
+                                createJdbcDataSource(
+                                        "jdbc:hsqldb:mem:memdb"), "liquibase/changeLogMulti.xml"))
                         .build();
             }
 

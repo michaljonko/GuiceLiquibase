@@ -14,7 +14,7 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'signing'
 apply plugin: 'findbugs'
-//apply plugin: 'checkstyle'
+apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 defaultTasks 'clean', 'build', 'shadowJar'
@@ -43,6 +43,17 @@ dependencies {
 }
 
 tasks.withType(FindBugs) {
+    reports {
+        xml.enabled false
+        html.enabled true
+    }
+}
+
+checkstyle {
+    toolVersion = '7.1.2'
+}
+
+tasks.withType(Checkstyle) {
     reports {
         xml.enabled false
         html.enabled true
