@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
-
 public final class GuiceLiquibaseModule extends PrivateModule {
 
   private static final Key<GuiceLiquibaseConfig> LIQUIBASE_CONFIG_KEY =
