@@ -1,16 +1,33 @@
-# GuiceLiquibase
-Liquibase extension to easy use with Guice. Inspired by [*CDI Liquibase*](http://www.liquibase.org/documentation/cdi.html) - there is no support for *Google Guice* at the moment.
+package pl.coffeepower.guiceliquibase;
 
-## Example
-```java
-public class Example {
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Provides;
 
-  public static void main(String[] args) throws Exception {
+import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
+
+public class ExampleTest {
+
+  @SuppressWarnings("checkstyle:javadocmethod")
+  @BeforeClass
+  public static void beforeClass() throws Exception {
     try {
       Class.forName("org.hsqldb.jdbc.JDBCDriver");
     } catch (ClassNotFoundException exception) {
       throw new NoClassDefFoundError("Cannot find org.hsqldb.jdbc.JDBCDriver");
-    } 
+    }
+  }
+
+  @Test
+  public void shouldExecuteLiquibaseMigration() throws Exception {
     Guice.createInjector(new GuiceLiquibaseModule(), new MyLiquibaseConfigModule());
   }
 
@@ -42,4 +59,3 @@ public class Example {
     }
   }
 }
-```
