@@ -51,6 +51,7 @@ tasks.withType(FindBugs) {
 
 checkstyle {
     toolVersion = '7.1.2'
+    ignoreFailures = false
 }
 
 tasks.withType(Checkstyle) {
