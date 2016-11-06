@@ -1,13 +1,10 @@
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.14'
-}
-
 buildscript {
     repositories {
         jcenter()
     }
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
     }
 }
 
@@ -16,11 +13,17 @@ apply plugin: 'signing'
 apply plugin: 'findbugs'
 apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
 
-defaultTasks 'clean', 'build', 'shadowJar'
+defaultTasks 'clean', 'build', 'jar', 'shadowJar'
 
-group = 'pl.coffeepower.guiceliquibase'
-version = new File('version.txt').text
+def appGroup = 'pl.coffeepower'
+def appVersion = new File('version.txt').text.trim()
+def appName = rootProject.name
+
+group = appGroup
+version = appVersion
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -28,7 +31,46 @@ compileJava {
     options.encoding = 'UTF-8'
 }
 
+publishing {
+    publications {
+        GuiceLiquibase(MavenPublication) {
+            from components.java
+            groupId appGroup
+            artifactId appName
+            version appVersion
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    publications = ['GuiceLiquibase']
+    configurations = ['archives']
+    publish = true
+    pkg {
+        repo = 'maven'
+        name = appName
+        desc = 'Guice module for Liquibase to execute DB change sets automatically as a CDI extension'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/michaljonko/GuiceLiquibase.git'
+        issueTrackerUrl = 'https://github.com/michaljonko/GuiceLiquibase/issues'
+        websiteUrl = 'https://github.com/michaljonko/GuiceLiquibase'
+        githubRepo = 'michaljonko/GuiceLiquibase'
+        githubReleaseNotesFile = 'README.md'
+        labels = ['liquibase', 'db', 'guice', 'cdi']
+        publicDownloadNumbers = true
+        version {
+            name = appVersion
+            desc = "GuiceLiquibase snpashot version"
+            released = new Date()
+            vcsTag = appVersion
+        }
+    }
+}
+
 repositories {
+    jcenter()
     mavenCentral()
 }
 
@@ -59,4 +101,8 @@ tasks.withType(Checkstyle) {
         xml.enabled false
         html.enabled true
     }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14'
 }

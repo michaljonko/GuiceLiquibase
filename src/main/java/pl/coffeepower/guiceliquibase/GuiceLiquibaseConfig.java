@@ -69,12 +69,13 @@ public final class GuiceLiquibaseConfig {
 
     /**
      * Creates new <code>LiquiBaseConfig</code> for passed DataSource and changelog file location.
+     * <br>
+     * http://www.liquibase.org/documentation/databasechangelog.html
      *
      * @param dataSource    DataSource where Liquibase will be running
      * @param changeLogPath Liquibase changelog with all changesets
      * @throws NullPointerException     when <code>dataSource</code> is null
      * @throws IllegalArgumentException when <code>changeLogPath</code> is null or empty
-     * @link http://www.liquibase.org/documentation/databasechangelog.html
      */
     public LiquibaseConfig(DataSource dataSource, String changeLogPath) {
       this.dataSource = Preconditions.checkNotNull(dataSource, "dataSource must be defined.");
@@ -141,6 +142,7 @@ public final class GuiceLiquibaseConfig {
      * Adds <code>LiquibaseConfig</code> instance to the set of configuration.
      *
      * @param config <code>LiquibaseConfig</code> object
+     * @return itself
      */
     public Builder withLiquibaseConfig(LiquibaseConfig config) {
       Preconditions.checkNotNull(config);
@@ -152,6 +154,7 @@ public final class GuiceLiquibaseConfig {
      * Adds <code>LiquibaseConfig</code> instances to the set of configuration.
      *
      * @param configs <code>LiquibaseConfig</code> object
+     * @return itself
      */
     public Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
       Preconditions.checkNotNull(configs);
