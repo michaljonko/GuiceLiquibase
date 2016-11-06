@@ -1,13 +1,10 @@
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.14'
-}
-
 buildscript {
     repositories {
         jcenter()
     }
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
     }
 }
 
@@ -16,11 +13,17 @@ apply plugin: 'signing'
 apply plugin: 'findbugs'
 apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
-defaultTasks 'clean', 'build', 'shadowJar'
+defaultTasks 'clean', 'build', 'jar', 'shadowJar'
 
-group = 'pl.coffeepower.guiceliquibase'
-version = new File('version.txt').text
+def appGroup = 'pl.coffeepower.guiceliquibase'
+def appVersion = new File('version.txt').text.trim()
+
+group = appGroup
+version = appVersion
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -28,7 +31,38 @@ compileJava {
     options.encoding = 'UTF-8'
 }
 
+publishing {
+    publications {
+        GuiceLiquibase(MavenPublication) {
+            from components.java
+            groupId appGroup
+            artifactId rootProject.name
+            version appVersion
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    publications = ['GuiceLiquibase']
+    pkg {
+        repo = 'maven'
+        name = rootProject.name
+        userOrg = user
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/michaljonko/GuiceLiquibase.git'
+        labels = ['liquibase', 'db', 'guice', 'cdi']
+        version {
+            name = appVersion
+            desc = 'Guice module for Liquibase as a CDI extension'
+            released = new Date()
+        }
+    }
+}
+
 repositories {
+    jcenter()
     mavenCentral()
 }
 
@@ -59,4 +93,8 @@ tasks.withType(Checkstyle) {
         xml.enabled false
         html.enabled true
     }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14'
 }
