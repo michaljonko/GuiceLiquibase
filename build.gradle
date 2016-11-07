@@ -14,13 +14,13 @@ apply plugin: 'findbugs'
 apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'com.jfrog.bintray'
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
 defaultTasks 'clean', 'build', 'jar', 'shadowJar'
 
-def appGroup = 'pl.coffeepower.guiceliquibase'
+def appGroup = 'pl.coffeepower'
 def appVersion = new File('version.txt').text.trim()
+def appName = rootProject.name
 
 group = appGroup
 version = appVersion
@@ -36,7 +36,7 @@ publishing {
         GuiceLiquibase(MavenPublication) {
             from components.java
             groupId appGroup
-            artifactId rootProject.name
+            artifactId appName
             version appVersion
         }
     }
@@ -46,17 +46,25 @@ bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
     publications = ['GuiceLiquibase']
+    configurations = ['archives']
+    publish = true
     pkg {
         repo = 'maven'
-        name = rootProject.name
-        userOrg = user
+        name = appName
+        desc = 'Guice module for Liquibase to execute DB change sets automatically as a CDI extension'
         licenses = ['Apache-2.0']
         vcsUrl = 'https://github.com/michaljonko/GuiceLiquibase.git'
+        issueTrackerUrl = 'https://github.com/michaljonko/GuiceLiquibase/issues'
+        websiteUrl = 'https://github.com/michaljonko/GuiceLiquibase'
+        githubRepo = 'michaljonko/GuiceLiquibase'
+        githubReleaseNotesFile = 'README.md'
         labels = ['liquibase', 'db', 'guice', 'cdi']
+        publicDownloadNumbers = true
         version {
             name = appVersion
-            desc = 'Guice module for Liquibase as a CDI extension'
+            desc = "GuiceLiquibase snpashot version"
             released = new Date()
+            vcsTag = appVersion
         }
     }
 }
