@@ -13,6 +13,8 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 
+import liquibase.resource.ClassLoaderResourceAccessor;
+
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -207,10 +209,12 @@ public class GuiceLiquibaseModuleTest {
             .createConfigSet()
             .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
                 createJdbcDataSource(
-                    "jdbc:hsqldb:mem:memdb"), "liquibase/emptyChangeLog.xml"))
+                    "jdbc:hsqldb:mem:memdb"), "liquibase/emptyChangeLog.xml",
+                new ClassLoaderResourceAccessor(getClass().getClassLoader())))
             .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
                 createJdbcDataSource(
-                    "jdbc:hsqldb:mem:memdb"), "liquibase/changeLogMulti.xml"))
+                    "jdbc:hsqldb:mem:memdb"), "liquibase/changeLogMulti.xml",
+                new ClassLoaderResourceAccessor(getClass().getClassLoader())))
             .build();
       }
 

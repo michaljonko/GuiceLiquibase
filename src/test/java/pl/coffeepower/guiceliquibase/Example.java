@@ -4,6 +4,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Provides;
 
+import liquibase.resource.ClassLoaderResourceAccessor;
+
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,7 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-public class ExampleTest {
+public class Example {
 
   @SuppressWarnings("checkstyle:javadocmethod")
   @BeforeClass
@@ -54,7 +56,8 @@ public class ExampleTest {
           .withLiquibaseConfig(
               new GuiceLiquibaseConfig.LiquibaseConfig(
                   dataSource,
-                  "liquibase/exampleChangeLog.xml"))
+                  "liquibase/exampleChangeLog.xml",
+                  new ClassLoaderResourceAccessor(getClass().getClassLoader())))
           .build();
     }
   }
