@@ -16,7 +16,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 
-defaultTasks 'clean', 'build', 'jar', 'shadowJar'
+defaultTasks 'clean', 'build', 'jar', 'publishToMavenLocal'
 
 def appGroup = 'pl.coffeepower'
 def appVersion = new File('version.txt').text.trim()
@@ -31,6 +31,16 @@ compileJava {
     options.encoding = 'UTF-8'
 }
 
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocsJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
 publishing {
     publications {
         GuiceLiquibase(MavenPublication) {
@@ -38,6 +48,7 @@ publishing {
             groupId appGroup
             artifactId appName
             version appVersion
+            artifacts = [jar, sourcesJar, javadocsJar]
         }
     }
 }
