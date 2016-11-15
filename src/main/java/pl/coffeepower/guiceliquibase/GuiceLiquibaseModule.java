@@ -17,7 +17,6 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
-import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.util.LiquibaseUtil;
 
 import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
@@ -53,8 +52,6 @@ public final class GuiceLiquibaseModule extends PrivateModule {
   private static final class GuiceLiquibase {
 
     private static final Logger LOGGER = Logger.getLogger(GuiceLiquibase.class.getName());
-    private final ClassLoaderResourceAccessor resourceAccessor =
-        new ClassLoaderResourceAccessor(this.getClass().getClassLoader());
     private final Monitor monitor = new Monitor();
     private final GuiceLiquibaseConfig config;
     private boolean updated = false;
@@ -115,7 +112,7 @@ public final class GuiceLiquibaseModule extends PrivateModule {
         database = DatabaseFactory.getInstance()
             .findCorrectDatabaseImplementation(jdbcConnection);
         Liquibase liquibase = new Liquibase(
-            liquibaseConfig.getChangeLogPath(), resourceAccessor, database);
+            liquibaseConfig.getChangeLogPath(), liquibaseConfig.getResourceAccessor(), database);
         liquibase.update(new Contexts(Collections.emptyList()),
             new LabelExpression(Collections.emptyList()));
       } catch (SQLException exception) {
@@ -141,19 +138,19 @@ public final class GuiceLiquibaseModule extends PrivateModule {
       }
       GuiceLiquibase that = (GuiceLiquibase) obj;
       return Objects.equals(config, that.config)
-          && Objects.equals(resourceAccessor, that.resourceAccessor);
+          && Objects.equals(updated, that.updated)
+          && Objects.equals(monitor, that.monitor);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(config, resourceAccessor);
+      return Objects.hash(config);
     }
 
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("config", config)
-          .add("resourceAccessor", resourceAccessor)
           .toString();
     }
   }
