@@ -82,7 +82,7 @@ public final class GuiceLiquibaseConfig {
      * @param dataSource       DataSource where Liquibase will be running
      * @param changeLogPath    Liquibase changelog with all changesets
      * @param resourceAccessor Liquibase {@link ResourceAccessor} used for changelog file loading
-     * @throws NullPointerException     when <code>dataSource</code> or <code>resourceAccessor</code>
+     * @throws NullPointerException     when <code>dataSource</code>/<code>resourceAccessor</code>
      *                                  are null
      * @throws IllegalArgumentException when <code>changeLogPath</code> is null or empty
      */
