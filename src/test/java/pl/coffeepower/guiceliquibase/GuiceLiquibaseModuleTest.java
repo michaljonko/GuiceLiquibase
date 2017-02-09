@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
+import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,7 +36,6 @@ import javax.sql.DataSource;
 @RunWith(MockitoJUnitRunner.class)
 public class GuiceLiquibaseModuleTest {
 
-  private final Fixtures fixtures = new Fixtures();
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Mock
@@ -78,7 +77,7 @@ public class GuiceLiquibaseModuleTest {
           @Override
           protected void configure() {
             bind(GuiceLiquibaseConfig.class)
-                .annotatedWith(LiquibaseConfig.class)
+                .annotatedWith(GuiceLiquibase.class)
                 .toInstance(null);
           }
         });
@@ -93,7 +92,7 @@ public class GuiceLiquibaseModuleTest {
           @Override
           protected void configure() {
             bind(GuiceLiquibaseConfig.class)
-                .annotatedWith(LiquibaseConfig.class)
+                .annotatedWith(GuiceLiquibase.class)
                 .toInstance(
                     GuiceLiquibaseConfig.Builder
                         .createConfigSet()
@@ -107,7 +106,8 @@ public class GuiceLiquibaseModuleTest {
     when(dataSource.getConnection()).thenReturn(null);
     GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
         .createConfigSet()
-        .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(dataSource))
+        .withLiquibaseConfig(
+            LiquibaseConfig.Builder.of(dataSource).build())
         .build();
 
     expectedException.expect(CreationException.class);
@@ -119,7 +119,7 @@ public class GuiceLiquibaseModuleTest {
           @Override
           protected void configure() {
             bind(GuiceLiquibaseConfig.class)
-                .annotatedWith(LiquibaseConfig.class)
+                .annotatedWith(GuiceLiquibase.class)
                 .toInstance(config);
           }
         });
@@ -129,10 +129,10 @@ public class GuiceLiquibaseModuleTest {
   public void shouldExecuteLiquibaseUpdateWithSingleConfiguration() throws Exception {
     Injector injector = Guice.createInjector(
         new GuiceLiquibaseModule(),
-        fixtures.singleDataSourceModule);
+        Fixtures.SINGLE_DATA_SOURCE_MODULE);
 
     DataSource dataSource = injector
-        .getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
+        .getInstance(Key.get(GuiceLiquibaseConfig.class, GuiceLiquibase.class))
         .getConfigs().iterator().next().getDataSource();
     try (Connection connection = dataSource.getConnection()) {
       try (PreparedStatement preparedStatement =
@@ -154,10 +154,10 @@ public class GuiceLiquibaseModuleTest {
   public void shouldExecuteLiquibaseUpdateWithMultipleConfigurations() throws Exception {
     Injector injector = Guice.createInjector(
         new GuiceLiquibaseModule(),
-        fixtures.multiDataSourceModule);
+        Fixtures.MULTI_DATA_SOURCE_MODULE);
 
     DataSource dataSource = injector
-        .getInstance(Key.get(GuiceLiquibaseConfig.class, LiquibaseConfig.class))
+        .getInstance(Key.get(GuiceLiquibaseConfig.class, GuiceLiquibase.class))
         .getConfigs().iterator().next().getDataSource();
     try (Connection connection = dataSource.getConnection()) {
       try (PreparedStatement preparedStatement = connection.prepareStatement(
@@ -174,6 +174,7 @@ public class GuiceLiquibaseModuleTest {
   }
 
   private static final class Fixtures {
+
     private static final String ID_COLUMN_NAME = "id";
     private static final String NAME_COLUMN_NAME = "name";
     private static final String ACTIVE_COLUMN_NAME = "active";
@@ -184,15 +185,15 @@ public class GuiceLiquibaseModuleTest {
         "SELECT * FROM table_for_multi_test";
     private static final int EXPECTED_ID = 1;
     private static final boolean EXPECTED_ACTIVE = true;
-    private final Module singleDataSourceModule = new AbstractModule() {
+    private static final Module SINGLE_DATA_SOURCE_MODULE = new AbstractModule() {
 
       @Provides
-      @LiquibaseConfig
+      @GuiceLiquibase
       private GuiceLiquibaseConfig createConfig() {
         return GuiceLiquibaseConfig.Builder
             .createConfigSet()
-            .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
-                createJdbcDataSource("jdbc:hsqldb:mem:memdb")))
+            .withLiquibaseConfig(
+                LiquibaseConfig.Builder.of(createJdbcDataSource("jdbc:hsqldb:mem:memdb")).build())
             .build();
       }
 
@@ -200,21 +201,26 @@ public class GuiceLiquibaseModuleTest {
       protected void configure() {
       }
     };
-    private final Module multiDataSourceModule = new AbstractModule() {
+    private static final Module MULTI_DATA_SOURCE_MODULE = new AbstractModule() {
 
       @Provides
-      @LiquibaseConfig
+      @GuiceLiquibase
       private GuiceLiquibaseConfig createConfig() {
+        ClassLoader classLoader = getClass().getClassLoader();
         return GuiceLiquibaseConfig.Builder
             .createConfigSet()
-            .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
-                createJdbcDataSource(
-                    "jdbc:hsqldb:mem:memdb"), "liquibase/emptyChangeLog.xml",
-                new ClassLoaderResourceAccessor(getClass().getClassLoader())))
-            .withLiquibaseConfig(new GuiceLiquibaseConfig.LiquibaseConfig(
-                createJdbcDataSource(
-                    "jdbc:hsqldb:mem:memdb"), "liquibase/changeLogMulti.xml",
-                new ClassLoaderResourceAccessor(getClass().getClassLoader())))
+            .withLiquibaseConfig(
+                LiquibaseConfig.Builder.of(createJdbcDataSource("jdbc:hsqldb:mem:memdb"))
+                    .withChangeLogPath("liquibase/emptyChangeLog.xml")
+                    .withResourceAccessor(new ClassLoaderResourceAccessor(classLoader))
+                    .withDropFirst(false)
+                    .build())
+            .withLiquibaseConfig(
+                LiquibaseConfig.Builder.of(createJdbcDataSource("jdbc:hsqldb:mem:memdb"))
+                    .withChangeLogPath("liquibase/changeLogMulti.xml")
+                    .withResourceAccessor(new ClassLoaderResourceAccessor(classLoader))
+                    .withDropFirst(true)
+                    .build())
             .build();
       }
 

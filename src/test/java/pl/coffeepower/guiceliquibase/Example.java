@@ -10,7 +10,7 @@ import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
+import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,16 +48,18 @@ public class Example {
       return dataSource;
     }
 
-    @LiquibaseConfig
+    @GuiceLiquibase
     @Provides
     @Inject
     private GuiceLiquibaseConfig createLiquibaseConfig(DataSource dataSource) {
+      ClassLoader classLoader = getClass().getClassLoader();
       return GuiceLiquibaseConfig.Builder.createConfigSet()
           .withLiquibaseConfig(
-              new GuiceLiquibaseConfig.LiquibaseConfig(
-                  dataSource,
-                  "liquibase/exampleChangeLog.xml",
-                  new ClassLoaderResourceAccessor(getClass().getClassLoader())))
+              LiquibaseConfig.Builder.of(dataSource)
+                  .withChangeLogPath("liquibase/exampleChangeLog.xml")
+                  .withResourceAccessor(new ClassLoaderResourceAccessor(classLoader))
+                  .withDropFirst(false)
+                  .build())
           .build();
     }
   }

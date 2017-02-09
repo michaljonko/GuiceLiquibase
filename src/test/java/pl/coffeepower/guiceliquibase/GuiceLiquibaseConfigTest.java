@@ -5,6 +5,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.junit.Assert.assertThat;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -45,8 +47,7 @@ public class GuiceLiquibaseConfigTest {
 
   @Test
   public void shouldCreateConfig() throws Exception {
-    GuiceLiquibaseConfig.LiquibaseConfig liquibaseConfig =
-        new GuiceLiquibaseConfig.LiquibaseConfig(dataSource);
+    LiquibaseConfig liquibaseConfig = LiquibaseConfig.Builder.of(dataSource).build();
     GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
         .createConfigSet()
         .withLiquibaseConfig(liquibaseConfig)
@@ -56,12 +57,18 @@ public class GuiceLiquibaseConfigTest {
   }
 
   @Test
+  public void shouldPassEqualsAndHashCodeContracts() throws Exception {
+    EqualsVerifier.forClass(GuiceLiquibaseConfig.class)
+        .usingGetClass()
+        .verify();
+  }
+
+  @Test
   public void shouldThrowExceptionForNotDefinedConfig() throws Exception {
     expectedException.expect(NullPointerException.class);
     GuiceLiquibaseConfig.Builder.createConfigSet()
         .withLiquibaseConfig(null)
         .build();
-
   }
 
   @Test
@@ -70,6 +77,5 @@ public class GuiceLiquibaseConfigTest {
     GuiceLiquibaseConfig.Builder.createConfigSet()
         .withLiquibaseConfigs(null)
         .build();
-
   }
 }
