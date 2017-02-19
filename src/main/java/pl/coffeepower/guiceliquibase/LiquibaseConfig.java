@@ -2,12 +2,20 @@ package pl.coffeepower.guiceliquibase;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -17,6 +25,9 @@ public class LiquibaseConfig {
   private final String changeLogPath;
   private final ResourceAccessor resourceAccessor;
   private final boolean dropFirst;
+  private final Set<String> contexts;
+  private final Set<String> labels;
+  private final Map<String, String> parameters;
 
   /**
    * Creates new <code>LiquiBaseConfig</code> for defined DataSource, changelog file path and its
@@ -32,12 +43,22 @@ public class LiquibaseConfig {
    *                                  null
    * @throws IllegalArgumentException when <code>changeLogPath</code> is null or empty
    */
-  private LiquibaseConfig(DataSource dataSource, String changeLogPath,
-                          ResourceAccessor resourceAccessor, boolean dropFirst) {
-    this.dataSource = dataSource;
-    this.resourceAccessor = resourceAccessor;
-    this.changeLogPath = changeLogPath;
+  private LiquibaseConfig(DataSource dataSource,
+                          String changeLogPath,
+                          ResourceAccessor resourceAccessor,
+                          boolean dropFirst,
+                          Collection<String> contexts,
+                          Collection<String> labels,
+                          Map<String, String> parameters) {
+    this.dataSource = Preconditions.checkNotNull(dataSource, "dataSource must be defined.");
+    this.resourceAccessor =
+        Preconditions.checkNotNull(resourceAccessor, "resourceAccessor must be defined.");
+    this.changeLogPath =
+        Preconditions.checkNotNull(changeLogPath, "changeLogPath must be defined.");
     this.dropFirst = dropFirst;
+    this.contexts = ImmutableSet.copyOf(Preconditions.checkNotNull(contexts));
+    this.labels = ImmutableSet.copyOf(Preconditions.checkNotNull(labels));
+    this.parameters = ImmutableMap.copyOf(Preconditions.checkNotNull(parameters));
   }
 
   public final DataSource getDataSource() {
@@ -56,6 +77,18 @@ public class LiquibaseConfig {
     return dropFirst;
   }
 
+  public final Set<String> getContexts() {
+    return contexts;
+  }
+
+  public final Set<String> getLabels() {
+    return labels;
+  }
+
+  public Map<String, String> getParameters() {
+    return parameters;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
@@ -68,12 +101,16 @@ public class LiquibaseConfig {
     return Objects.equals(dataSource, that.dataSource)
         && Objects.equals(changeLogPath, that.changeLogPath)
         && Objects.equals(resourceAccessor, that.resourceAccessor)
-        && Objects.equals(dropFirst, that.dropFirst);
+        && Objects.equals(dropFirst, that.dropFirst)
+        && Objects.equals(contexts, that.contexts)
+        && Objects.equals(labels, that.labels)
+        && Objects.equals(parameters, that.parameters);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.dataSource, this.changeLogPath, this.resourceAccessor, this.dropFirst);
+    return Objects.hash(this.dataSource, this.changeLogPath, this.resourceAccessor, this.dropFirst,
+        this.contexts, this.labels, this.parameters);
   }
 
   @Override
@@ -88,17 +125,25 @@ public class LiquibaseConfig {
    */
   public static final class Builder {
 
-    public static final String DEFAULT_CHANGE_LOG_PATH = "liquibase/changeLog.xml";
+    static final String DEFAULT_CHANGE_LOG_PATH = "liquibase/changeLog.xml";
+    private static final Splitter CONTEXT_AND_LABEL_SPLITTER =
+        Splitter.on(',').omitEmptyStrings().trimResults();
     private DataSource dataSource;
     private String changeLogPath;
     private ResourceAccessor resourceAccessor;
     private boolean dropFirst;
+    private Set<String> contexts;
+    private Set<String> labels;
+    private Map<String, String> parameters;
 
     private Builder(DataSource dataSource) {
       this.dataSource = dataSource;
       this.changeLogPath = DEFAULT_CHANGE_LOG_PATH;
       this.resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader());
       this.dropFirst = false;
+      this.contexts = new HashSet<>();
+      this.labels = new HashSet<>();
+      this.parameters = new HashMap<>();
     }
 
     public static Builder of(DataSource dataSource) {
@@ -120,6 +165,27 @@ public class LiquibaseConfig {
       return this;
     }
 
+    public final Builder addContext(String value) {
+      if (!Strings.isNullOrEmpty(value)) {
+        this.contexts.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(value));
+      }
+      return this;
+    }
+
+    public final Builder addLabel(String value) {
+      if (!Strings.isNullOrEmpty(value)) {
+        this.labels.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(value));
+      }
+      return this;
+    }
+
+    public final Builder addParameter(String key, String value) {
+      if (!Strings.isNullOrEmpty(key)) {
+        parameters.put(key, value);
+      }
+      return this;
+    }
+
     public final LiquibaseConfig build() {
       Preconditions.checkArgument(
           !Strings.isNullOrEmpty(this.changeLogPath), "changeLogPath must be defined.");
@@ -128,7 +194,10 @@ public class LiquibaseConfig {
           this.dataSource,
           this.changeLogPath,
           this.resourceAccessor,
-          this.dropFirst);
+          this.dropFirst,
+          this.contexts,
+          this.labels,
+          this.parameters);
     }
   }
 }

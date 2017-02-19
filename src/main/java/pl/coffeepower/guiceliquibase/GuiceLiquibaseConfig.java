@@ -3,9 +3,9 @@ package pl.coffeepower.guiceliquibase;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -52,8 +52,8 @@ public final class GuiceLiquibaseConfig {
 
     private final Set<LiquibaseConfig> configs;
 
-    private Builder() {
-      configs = new HashSet<>();
+    private Builder(Set<LiquibaseConfig> configs) {
+      this.configs = configs;
     }
 
     /**
@@ -61,8 +61,13 @@ public final class GuiceLiquibaseConfig {
      *
      * @return new Builder instance
      */
-    public static Builder createConfigSet() {
-      return new Builder();
+    public static Builder of() {
+      return new Builder(Sets.newHashSet());
+    }
+
+    public static Builder of(LiquibaseConfig config) {
+      return new Builder(
+          Sets.newHashSet(Preconditions.checkNotNull(config, "config must be defined.")));
     }
 
     /**
@@ -71,9 +76,8 @@ public final class GuiceLiquibaseConfig {
      * @param config <code>LiquibaseConfig</code> object
      * @return itself
      */
-    public Builder withLiquibaseConfig(LiquibaseConfig config) {
-      Preconditions.checkNotNull(config);
-      configs.add(config);
+    public final Builder withLiquibaseConfig(LiquibaseConfig config) {
+      configs.add(Preconditions.checkNotNull(config));
       return this;
     }
 
@@ -83,9 +87,8 @@ public final class GuiceLiquibaseConfig {
      * @param configs <code>LiquibaseConfig</code> object
      * @return itself
      */
-    public Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
-      Preconditions.checkNotNull(configs);
-      this.configs.addAll(configs);
+    public final Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
+      this.configs.addAll(Preconditions.checkNotNull(configs));
       return this;
     }
 
@@ -94,7 +97,7 @@ public final class GuiceLiquibaseConfig {
      *
      * @return new <code>GuiceLiquibaseConfig</code> object
      */
-    public GuiceLiquibaseConfig build() {
+    public final GuiceLiquibaseConfig build() {
       return new GuiceLiquibaseConfig(configs);
     }
 

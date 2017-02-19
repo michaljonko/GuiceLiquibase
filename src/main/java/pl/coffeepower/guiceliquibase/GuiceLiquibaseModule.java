@@ -28,7 +28,6 @@ import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Objects;
 
 import javax.inject.Inject;
@@ -47,7 +46,7 @@ public final class GuiceLiquibaseModule extends PrivateModule {
   @Inject
   private void executeGuiceLiquibase(GuiceLiquibaseEngine guiceLiquibaseEngine) {
     try {
-      checkNotNull(guiceLiquibaseEngine, "GuiceLiquibaseEngine has to be defined.").executeUpdate();
+      checkNotNull(guiceLiquibaseEngine, "GuiceLiquibaseEngine has to be defined.").process();
     } catch (LiquibaseException exception) {
       throw new UnexpectedLiquibaseException(exception);
     }
@@ -68,7 +67,7 @@ public final class GuiceLiquibaseModule extends PrivateModule {
       this.config = config;
     }
 
-    private void executeUpdate() throws LiquibaseException {
+    private void process() throws LiquibaseException {
       monitor.enter();
       try {
         if (updated) {
@@ -102,9 +101,10 @@ public final class GuiceLiquibaseModule extends PrivateModule {
 
     private void executeLiquibaseUpdate(LiquibaseConfig config) throws LiquibaseException {
       LOGGER.info("Applying changes for {}", config.toString());
+      Connection connection = null;
       Database database = null;
       try {
-        Connection connection =
+        connection =
             checkNotNull(config.getDataSource(), "DataSource must be defined.")
                 .getConnection();
         JdbcConnection jdbcConnection = new JdbcConnection(
@@ -114,12 +114,14 @@ public final class GuiceLiquibaseModule extends PrivateModule {
             config.getChangeLogPath(),
             config.getResourceAccessor(),
             database);
+        checkNotNull(config.getParameters(), "Parameters map cannot be null.")
+            .forEach(liquibase::setChangeLogParameter);
         if (config.isDropFirst()) {
           liquibase.dropAll();
         }
         liquibase.update(
-            new Contexts(Collections.emptyList()),
-            new LabelExpression(Collections.emptyList()));
+            new Contexts(config.getContexts()),
+            new LabelExpression(config.getLabels()));
       } catch (SQLException exception) {
         LOGGER.error("Problem while SQL and JDBC calls.", exception);
         throw new DatabaseException(exception);
@@ -129,6 +131,13 @@ public final class GuiceLiquibaseModule extends PrivateModule {
       } finally {
         if (database != null) {
           database.close();
+        } else if (connection != null) {
+          try {
+            connection.rollback();
+            connection.close();
+          } catch (SQLException exception) {
+            LOGGER.error("Problem while closing connection.", exception);
+          }
         }
       }
     }

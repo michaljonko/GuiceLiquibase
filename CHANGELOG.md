@@ -10,6 +10,6 @@
     - changed annotation from @LiquibaseConfig to @GuiceLiquibase
     - added _dropFirst_ to LiquibaseConfig
     - added _LiquibaseConfig_ Builder and make constructor private
-    
+    - added PIT for tests quality and covarage
 - #### 0.0.1
     - Initial version
