@@ -12,5 +12,4 @@ public class LiquibaseConfigTest {
         .usingGetClass()
         .verify();
   }
-
 }

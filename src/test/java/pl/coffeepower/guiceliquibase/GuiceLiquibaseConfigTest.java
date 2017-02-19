@@ -29,7 +29,7 @@ public class GuiceLiquibaseConfigTest {
   @Test
   public void shouldCreateEmptyConfig() throws Exception {
     GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
-        .createConfigSet()
+        .of()
         .build();
     assertThat(config, notNullValue());
     assertThat(config.getConfigs(), empty());
@@ -38,8 +38,7 @@ public class GuiceLiquibaseConfigTest {
   @Test
   public void shouldCreateEmptyConfigs() throws Exception {
     GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
-        .createConfigSet()
-        .withLiquibaseConfigs(Collections.emptyList())
+        .of()
         .build();
     assertThat(config, notNullValue());
     assertThat(config.getConfigs(), empty());
@@ -49,8 +48,7 @@ public class GuiceLiquibaseConfigTest {
   public void shouldCreateConfig() throws Exception {
     LiquibaseConfig liquibaseConfig = LiquibaseConfig.Builder.of(dataSource).build();
     GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
-        .createConfigSet()
-        .withLiquibaseConfig(liquibaseConfig)
+        .of(liquibaseConfig)
         .build();
     assertThat(config, notNullValue());
     assertThat(config.getConfigs(), containsInAnyOrder(liquibaseConfig));
@@ -66,15 +64,14 @@ public class GuiceLiquibaseConfigTest {
   @Test
   public void shouldThrowExceptionForNotDefinedConfig() throws Exception {
     expectedException.expect(NullPointerException.class);
-    GuiceLiquibaseConfig.Builder.createConfigSet()
-        .withLiquibaseConfig(null)
+    GuiceLiquibaseConfig.Builder.of(null)
         .build();
   }
 
   @Test
   public void shouldThrowExceptionForNotDefinedConfigs() throws Exception {
     expectedException.expect(NullPointerException.class);
-    GuiceLiquibaseConfig.Builder.createConfigSet()
+    GuiceLiquibaseConfig.Builder.of()
         .withLiquibaseConfigs(null)
         .build();
   }

@@ -53,7 +53,7 @@ public class Example {
     @Inject
     private GuiceLiquibaseConfig createLiquibaseConfig(DataSource dataSource) {
       ClassLoader classLoader = getClass().getClassLoader();
-      return GuiceLiquibaseConfig.Builder.createConfigSet()
+      return GuiceLiquibaseConfig.Builder.of()
           .withLiquibaseConfig(
               LiquibaseConfig.Builder.of(dataSource)
                   .withChangeLogPath("liquibase/exampleChangeLog.xml")
