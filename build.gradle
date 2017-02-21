@@ -14,25 +14,29 @@ apply plugin: 'java'
 apply plugin: 'signing'
 apply plugin: 'findbugs'
 apply plugin: 'checkstyle'
+apply plugin: 'info.solidsoft.pitest'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
-apply plugin: 'info.solidsoft.pitest'
 
-defaultTasks 'clean', 'build', 'pitest', 'jar', 'publishToMavenLocal'
+defaultTasks 'clean', 'build', 'jar', 'publishToMavenLocal'
 
 def appGroup = 'pl.coffeepower'
 def appVersion = new File('version.txt').text.trim()
 def appName = rootProject.name
 
 group = appGroup
-version = appVersion
+version = appVersion.endsWith('SNAPSHOT') ?
+        appVersion + '-' + (new Date().format('yyyyMMddHHmmss')) :
+        appVersion
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
     options.encoding = 'UTF-8'
 }
+
+build.dependsOn 'pitest'
 
 task sourcesJar(type: Jar) {
     classifier = 'sources'
@@ -121,7 +125,7 @@ tasks.withType(Checkstyle) {
 }
 
 pitest {
-    threads = 2
+    threads = 4
 }
 
 task wrapper(type: Wrapper) {

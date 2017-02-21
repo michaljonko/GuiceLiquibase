@@ -1,5 +1,6 @@
 package pl.coffeepower.guiceliquibase;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -19,7 +20,7 @@ import java.util.Set;
 
 import javax.sql.DataSource;
 
-public class LiquibaseConfig {
+public final class LiquibaseConfig {
 
   private final DataSource dataSource;
   private final String changeLogPath;
@@ -116,6 +117,7 @@ public class LiquibaseConfig {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
+        .add("dataSource", dataSource)
         .add("changeLogPath", changeLogPath)
         .toString();
   }
@@ -125,10 +127,10 @@ public class LiquibaseConfig {
    */
   public static final class Builder {
 
-    static final String DEFAULT_CHANGE_LOG_PATH = "liquibase/changeLog.xml";
+    private static final String DEFAULT_CHANGE_LOG_PATH = "liquibase/changeLog.xml";
     private static final Splitter CONTEXT_AND_LABEL_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults();
-    private DataSource dataSource;
+    private final DataSource dataSource;
     private String changeLogPath;
     private ResourceAccessor resourceAccessor;
     private boolean dropFirst;
@@ -148,6 +150,18 @@ public class LiquibaseConfig {
 
     public static Builder of(DataSource dataSource) {
       return new Builder(Preconditions.checkNotNull(dataSource, "dataSource must be defined."));
+    }
+
+    @VisibleForTesting
+    static Builder of(Builder builder) {
+      Builder copy = of(Preconditions.checkNotNull(builder, "builder cannot be null.").dataSource)
+          .withChangeLogPath(builder.changeLogPath)
+          .withDropFirst(builder.dropFirst)
+          .withResourceAccessor(builder.resourceAccessor);
+      builder.contexts.forEach(copy::addContext);
+      builder.labels.forEach(copy::addLabel);
+      builder.parameters.forEach(copy::addParameter);
+      return copy;
     }
 
     public final Builder withChangeLogPath(String value) {
@@ -198,6 +212,29 @@ public class LiquibaseConfig {
           this.contexts,
           this.labels,
           this.parameters);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Builder builder = (Builder) o;
+      return dropFirst == builder.dropFirst &&
+          Objects.equals(dataSource, builder.dataSource) &&
+          Objects.equals(changeLogPath, builder.changeLogPath) &&
+          Objects.equals(resourceAccessor, builder.resourceAccessor) &&
+          Objects.equals(contexts, builder.contexts) &&
+          Objects.equals(labels, builder.labels) &&
+          Objects.equals(parameters, builder.parameters);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(dataSource);
     }
   }
 }
