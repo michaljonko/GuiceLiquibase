@@ -41,7 +41,6 @@ public class GuiceLiquibaseModuleTest {
   @Mock
   private DataSource dataSource;
 
-  @SuppressWarnings("checkstyle:javadocmethod")
   @BeforeClass
   public static void beforeClass() throws Exception {
     try {
@@ -51,7 +50,6 @@ public class GuiceLiquibaseModuleTest {
     }
   }
 
-  @SuppressWarnings("checkstyle:javadocmethod")
   @Before
   public void setUp() throws Exception {
     try (Connection connection =

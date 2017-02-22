@@ -102,7 +102,7 @@ public final class LiquibaseConfig {
     return Objects.equals(dataSource, that.dataSource)
         && Objects.equals(changeLogPath, that.changeLogPath)
         && Objects.equals(resourceAccessor, that.resourceAccessor)
-        && Objects.equals(dropFirst, that.dropFirst)
+        && (dropFirst == that.dropFirst)
         && Objects.equals(contexts, that.contexts)
         && Objects.equals(labels, that.labels)
         && Objects.equals(parameters, that.parameters);
@@ -117,8 +117,11 @@ public final class LiquibaseConfig {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("dataSource", dataSource)
         .add("changeLogPath", changeLogPath)
+        .add("dropFirst", dropFirst)
+        .add("contexts", contexts)
+        .add("labels", labels)
+        .add("parameters", parameters)
         .toString();
   }
 
@@ -215,21 +218,21 @@ public final class LiquibaseConfig {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
+    public boolean equals(Object obj) {
+      if (this == obj) {
         return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (obj == null || getClass() != obj.getClass()) {
         return false;
       }
-      Builder builder = (Builder) o;
-      return dropFirst == builder.dropFirst &&
-          Objects.equals(dataSource, builder.dataSource) &&
-          Objects.equals(changeLogPath, builder.changeLogPath) &&
-          Objects.equals(resourceAccessor, builder.resourceAccessor) &&
-          Objects.equals(contexts, builder.contexts) &&
-          Objects.equals(labels, builder.labels) &&
-          Objects.equals(parameters, builder.parameters);
+      Builder builder = (Builder) obj;
+      return dropFirst == builder.dropFirst
+          && Objects.equals(dataSource, builder.dataSource)
+          && Objects.equals(changeLogPath, builder.changeLogPath)
+          && Objects.equals(resourceAccessor, builder.resourceAccessor)
+          && Objects.equals(contexts, builder.contexts)
+          && Objects.equals(labels, builder.labels)
+          && Objects.equals(parameters, builder.parameters);
     }
 
     @Override
