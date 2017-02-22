@@ -8,6 +8,7 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase;
@@ -16,6 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
+@Ignore
 public class Example {
 
   @SuppressWarnings("checkstyle:javadocmethod")
@@ -52,14 +54,12 @@ public class Example {
     @Provides
     @Inject
     private GuiceLiquibaseConfig createLiquibaseConfig(DataSource dataSource) {
-      ClassLoader classLoader = getClass().getClassLoader();
-      return GuiceLiquibaseConfig.Builder.of()
-          .withLiquibaseConfig(
-              LiquibaseConfig.Builder.of(dataSource)
-                  .withChangeLogPath("liquibase/exampleChangeLog.xml")
-                  .withResourceAccessor(new ClassLoaderResourceAccessor(classLoader))
-                  .withDropFirst(false)
-                  .build())
+      return GuiceLiquibaseConfig.Builder
+          .of(LiquibaseConfig.Builder.of(dataSource)
+              .withChangeLogPath("liquibase/exampleChangeLog.xml")
+              .withResourceAccessor(new ClassLoaderResourceAccessor(getClass().getClassLoader()))
+              .withDropFirst(false)
+              .build())
           .build();
     }
   }

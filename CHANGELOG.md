@@ -12,6 +12,8 @@
     - added _LiquibaseConfig_ Builder and make constructor private
     - added PIT for tests quality and coverage
     - added date signature to snapshot build
-    - added code coverage for _LiquibaseConfig_ 
+    - added code coverage for _LiquibaseConfig_
+    - added ToStringVerifier 1.0.2
+    - added @Ignore to _Example_ in test path
 - #### 0.0.1
     - Initial version
