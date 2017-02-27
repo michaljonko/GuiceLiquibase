@@ -3,6 +3,7 @@ package pl.coffeepower.guiceliquibase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.Key;
@@ -29,6 +30,7 @@ import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
@@ -52,17 +54,17 @@ public final class GuiceLiquibaseModule extends PrivateModule {
     }
   }
 
-  private static final class GuiceLiquibaseEngine {
+  @VisibleForTesting
+  static final class GuiceLiquibaseEngine {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceLiquibaseEngine.class);
     private final Monitor monitor = new Monitor();
     private final GuiceLiquibaseConfig config;
-    private boolean updated = false;
+    private final AtomicBoolean updated = new AtomicBoolean(false);
 
     @Inject
     private GuiceLiquibaseEngine(@GuiceLiquibase GuiceLiquibaseConfig config) {
       LOGGER.info("Creating GuiceLiquibase for Liquibase {}", LiquibaseUtil.getBuildVersion());
-      checkArgument(config != null, "Injected GuiceLiquibaseConfig cannot be null.");
       checkArgument(!config.getConfigs().isEmpty(), "Injected configuration set is empty.");
       this.config = config;
     }
@@ -70,7 +72,7 @@ public final class GuiceLiquibaseModule extends PrivateModule {
     private void process() throws LiquibaseException {
       monitor.enter();
       try {
-        if (updated) {
+        if (updated.get()) {
           LOGGER.warn("Liquibase update is already executed with success.");
           return;
         }
@@ -78,7 +80,7 @@ public final class GuiceLiquibaseModule extends PrivateModule {
           for (LiquibaseConfig liquibaseConfig : config.getConfigs()) {
             executeLiquibaseUpdate(liquibaseConfig);
           }
-          updated = true;
+          updated.compareAndSet(false, true);
         }
       } finally {
         monitor.leave();
@@ -91,7 +93,7 @@ public final class GuiceLiquibaseModule extends PrivateModule {
           .getConfiguration(GlobalConfiguration.class)
           .getShouldRun();
       if (!shouldRun) {
-        LOGGER.warn("Cannot run Liquibase updates because {}  is set to false.",
+        LOGGER.warn("Cannot run Liquibase updates because {} is set to false.",
             liquibaseConfiguration
                 .describeValueLookupLogic(GlobalConfiguration.class, GlobalConfiguration.SHOULD_RUN)
         );
@@ -104,12 +106,12 @@ public final class GuiceLiquibaseModule extends PrivateModule {
       Connection connection = null;
       Database database = null;
       try {
-        connection =
-            checkNotNull(config.getDataSource(), "DataSource must be defined.")
-                .getConnection();
+        connection = checkNotNull(config.getDataSource(), "DataSource must be defined.")
+            .getConnection();
         JdbcConnection jdbcConnection = new JdbcConnection(
             checkNotNull(connection, "DataSource returns null connection instance."));
-        database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(jdbcConnection);
+        database = DatabaseFactory.getInstance()
+            .findCorrectDatabaseImplementation(jdbcConnection);
         Liquibase liquibase = new Liquibase(
             config.getChangeLogPath(),
             config.getResourceAccessor(),
@@ -158,13 +160,15 @@ public final class GuiceLiquibaseModule extends PrivateModule {
 
     @Override
     public int hashCode() {
-      return Objects.hash(config);
+      return Objects.hash(config, updated, monitor);
     }
 
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("config", config)
+          .add("monitor", monitor)
+          .add("updated", updated)
           .toString();
     }
   }
