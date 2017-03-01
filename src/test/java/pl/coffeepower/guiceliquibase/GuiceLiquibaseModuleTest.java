@@ -5,6 +5,8 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -21,8 +23,13 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 
+import be.joengenduvel.java.verifiers.ToStringVerifier;
+
 import liquibase.configuration.GlobalConfiguration;
 import liquibase.configuration.LiquibaseConfiguration;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 
@@ -45,8 +52,6 @@ import java.util.UUID;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-import be.joengenduvel.java.verifiers.ToStringVerifier;
-
 public class GuiceLiquibaseModuleTest {
 
   @Rule
@@ -65,9 +70,9 @@ public class GuiceLiquibaseModuleTest {
   public void shouldThrowExceptionForRequiredBinding() throws Exception {
     expectedException.expect(CreationException.class);
     expectedException.expectMessage(containsString("Unable to create injector"));
-    expectedException.expectMessage(containsString("No implementation for " +
-        "pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig annotated with interface " +
-        "pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase was bound."));
+    expectedException.expectMessage(containsString("No implementation for "
+        + "pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig annotated with interface "
+        + "pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase was bound."));
 
     Guice.createInjector(new GuiceLiquibaseModule());
   }
@@ -212,13 +217,17 @@ public class GuiceLiquibaseModuleTest {
     }
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressWarnings("ODR_OPEN_DATABASE_RESOURCE")
   @Test
-  public void shouldThrowExceptionWhenProblemOccurredDuringProcessing() throws Exception {
+  public void shouldThrowExceptionWhenProblemOccurredDuringDatabaseCreation() throws Exception {
     expectedException.expect(CreationException.class);
+    expectedException.expectMessage(containsString("My SQLException."));
     expectedException.expectCause(instanceOf(UnexpectedLiquibaseException.class));
 
     DataSource dataSource = mock(DataSource.class);
-    when(dataSource.getConnection()).thenThrow(new SQLException());
+    Connection connection = mock(Connection.class);
+    when(dataSource.getConnection()).thenReturn(connection);
+    when(connection.getMetaData()).thenThrow(new SQLException("My SQLException."));
 
     Guice.createInjector(
         new GuiceLiquibaseModule(),
@@ -237,7 +246,54 @@ public class GuiceLiquibaseModuleTest {
         });
 
     verify(dataSource).getConnection();
-    verifyNoMoreInteractions(dataSource);
+    verify(connection).rollback();
+    verify(connection).close();
+    verifyNoMoreInteractions(connection, dataSource);
+  }
+
+  @edu.umd.cs.findbugs.annotations.SuppressWarnings("ODR_OPEN_DATABASE_RESOURCE")
+  @Test
+  public void shouldThrowExceptionWhenProblemOccurredDuringLiquibaseUpdate() throws Exception {
+    expectedException.expect(CreationException.class);
+    expectedException.expectMessage(containsString("Problem while Liquibase."));
+    expectedException.expectCause(instanceOf(UnexpectedLiquibaseException.class));
+
+    DatabaseFactory oldDatabaseFactory = DatabaseFactory.getInstance();
+
+    try {
+      DataSource dataSource = mock(DataSource.class);
+      Connection connection = mock(Connection.class);
+      DatabaseFactory databaseFactory = mock(DatabaseFactory.class);
+      Database database = mock(Database.class);
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(databaseFactory.findCorrectDatabaseImplementation(any())).thenReturn(database);
+      doThrow(new DatabaseException("Problem while Liquibase.")).when(database).rollback();
+      DatabaseFactory.setInstance(databaseFactory);
+
+      Guice.createInjector(
+          new GuiceLiquibaseModule(),
+          new AbstractModule() {
+
+            @Override
+            protected void configure() {
+              bind(GuiceLiquibaseConfig.class)
+                  .annotatedWith(GuiceLiquibase.class)
+                  .toInstance(GuiceLiquibaseConfig.Builder
+                      .of(LiquibaseConfig.Builder
+                          .of(dataSource)
+                          .build())
+                      .build());
+            }
+          });
+
+      verify(dataSource).getConnection();
+      verify(connection).rollback();
+      verify(connection).close();
+      verify(database).close();
+      verifyNoMoreInteractions(connection, dataSource, database);
+    } finally {
+      DatabaseFactory.setInstance(oldDatabaseFactory);
+    }
   }
 
   @Test
@@ -279,9 +335,9 @@ public class GuiceLiquibaseModuleTest {
     try {
       return (Class<GuiceLiquibaseModule.LiquibaseEngine>)
           Class.forName("pl.coffeepower.guiceliquibase.GuiceLiquibaseModule$GuiceLiquibaseEngine");
-    } catch (ClassNotFoundException e) {
-      fail(e.getMessage());
-      throw new IllegalStateException(e);
+    } catch (ClassNotFoundException exception) {
+      fail(exception.getMessage());
+      throw new IllegalStateException(exception);
     }
   }
 

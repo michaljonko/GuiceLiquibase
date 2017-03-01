@@ -104,6 +104,7 @@ dependencies {
     testCompile group: 'org.hsqldb', name: 'hsqldb', version: '2.3.4'
     testCompile group: 'nl.jqno.equalsverifier', name: 'equalsverifier', version: '2.2.1'
     testCompile group: 'be.joengenduvel.java.verifiers', name: 'to-string', version: '1.0.2'
+    testCompile group: 'findbugs', name: 'annotations', version: '1.0.0'
 }
 
 findbugs {

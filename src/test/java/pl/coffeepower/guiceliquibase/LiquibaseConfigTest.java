@@ -13,6 +13,8 @@ import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import be.joengenduvel.java.verifiers.ToStringVerifier;
+
 import liquibase.resource.ResourceAccessor;
 import liquibase.sdk.resource.MockResourceAccessor;
 
@@ -28,8 +30,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import javax.sql.DataSource;
-
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 
 public class LiquibaseConfigTest {
 
