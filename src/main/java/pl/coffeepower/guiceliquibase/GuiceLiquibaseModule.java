@@ -41,35 +41,43 @@ public final class GuiceLiquibaseModule extends PrivateModule {
 
   protected void configure() {
     requireBinding(LIQUIBASE_CONFIG_KEY);
-    bind(GuiceLiquibaseEngine.class).asEagerSingleton();
+    bind(LiquibaseEngine.class).to(GuiceLiquibaseEngine.class).asEagerSingleton();
     requestInjection(this);
   }
 
   @Inject
-  private void executeGuiceLiquibase(GuiceLiquibaseEngine guiceLiquibaseEngine) {
+  private void executeGuiceLiquibase(LiquibaseEngine guiceLiquibaseEngine) {
     try {
-      checkNotNull(guiceLiquibaseEngine, "GuiceLiquibaseEngine has to be defined.").process();
+      checkNotNull(guiceLiquibaseEngine, "LiquibaseEngine has to be defined.").process();
     } catch (LiquibaseException exception) {
       throw new UnexpectedLiquibaseException(exception);
     }
   }
 
+  interface LiquibaseEngine {
+
+    void process() throws LiquibaseException;
+  }
+
   @VisibleForTesting
-  static final class GuiceLiquibaseEngine {
+  private static final class GuiceLiquibaseEngine implements LiquibaseEngine {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceLiquibaseEngine.class);
-    private final Monitor monitor = new Monitor();
+    private final Monitor monitor;
     private final GuiceLiquibaseConfig config;
-    private final AtomicBoolean updated = new AtomicBoolean(false);
+    private final AtomicBoolean updated;
 
     @Inject
     private GuiceLiquibaseEngine(@GuiceLiquibase GuiceLiquibaseConfig config) {
       LOGGER.info("Creating GuiceLiquibase for Liquibase {}", LiquibaseUtil.getBuildVersion());
       checkArgument(!config.getConfigs().isEmpty(), "Injected configuration set is empty.");
       this.config = config;
+      this.updated = new AtomicBoolean(false);
+      this.monitor = new Monitor();
     }
 
-    private void process() throws LiquibaseException {
+    @Override
+    public void process() throws LiquibaseException {
       monitor.enter();
       try {
         if (updated.get()) {
@@ -110,8 +118,8 @@ public final class GuiceLiquibaseModule extends PrivateModule {
             .getConnection();
         JdbcConnection jdbcConnection = new JdbcConnection(
             checkNotNull(connection, "DataSource returns null connection instance."));
-        database = DatabaseFactory.getInstance()
-            .findCorrectDatabaseImplementation(jdbcConnection);
+        database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(
+            checkNotNull(jdbcConnection, "JdbcConnection created from DataSource cannot be null."));
         Liquibase liquibase = new Liquibase(
             config.getChangeLogPath(),
             config.getResourceAccessor(),
