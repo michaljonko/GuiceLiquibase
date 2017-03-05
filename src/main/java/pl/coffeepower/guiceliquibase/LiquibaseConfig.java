@@ -40,6 +40,9 @@ public final class LiquibaseConfig {
    * @param changeLogPath    Liquibase changelog with all changesets
    * @param resourceAccessor Liquibase {@link ResourceAccessor} used for changelog file loading
    * @param dropFirst        Liquibase switch to drop all schemes and data in database
+   * @param contexts         Liquibase contexts which will be used for changelog
+   * @param labels           Liquibase labels
+   * @param parameters       Liquibase parameters
    * @throws NullPointerException     when <code>dataSource</code>/<code>resourceAccessor</code> are
    *                                  null
    * @throws IllegalArgumentException when <code>changeLogPath</code> is null or empty
@@ -183,16 +186,12 @@ public final class LiquibaseConfig {
     }
 
     public final Builder addContext(String value) {
-      if (!Strings.isNullOrEmpty(value)) {
-        this.contexts.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(value));
-      }
+      this.contexts.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(Strings.nullToEmpty(value)));
       return this;
     }
 
     public final Builder addLabel(String value) {
-      if (!Strings.isNullOrEmpty(value)) {
-        this.labels.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(value));
-      }
+      this.labels.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(Strings.nullToEmpty(value)));
       return this;
     }
 

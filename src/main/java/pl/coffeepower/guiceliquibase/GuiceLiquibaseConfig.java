@@ -88,8 +88,7 @@ public final class GuiceLiquibaseConfig {
      * @return itself
      */
     public final Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
-      Preconditions.checkNotNull(configs).forEach(Preconditions::checkNotNull);
-      this.configs.addAll(configs);
+      Preconditions.checkNotNull(configs).forEach(this::withLiquibaseConfig);
       return this;
     }
 
