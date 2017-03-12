@@ -3,7 +3,6 @@ package pl.coffeepower.guiceliquibase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.Key;
@@ -48,7 +47,7 @@ public final class GuiceLiquibaseModule extends PrivateModule {
   }
 
   @Inject
-  private void executeGuiceLiquibase(LiquibaseEngine guiceLiquibaseEngine) {
+  private void executeGuiceLiquibaseEngine(LiquibaseEngine guiceLiquibaseEngine) {
     try {
       checkNotNull(guiceLiquibaseEngine, "LiquibaseEngine has to be defined.").process();
     } catch (LiquibaseException exception) {
@@ -61,7 +60,6 @@ public final class GuiceLiquibaseModule extends PrivateModule {
     void process() throws LiquibaseException;
   }
 
-  @VisibleForTesting
   private static final class GuiceLiquibaseEngine implements LiquibaseEngine {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceLiquibaseEngine.class);

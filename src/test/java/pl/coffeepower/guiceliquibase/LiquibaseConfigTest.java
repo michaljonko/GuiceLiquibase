@@ -8,12 +8,13 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 
 import liquibase.resource.ResourceAccessor;
 import liquibase.sdk.resource.MockResourceAccessor;
@@ -25,11 +26,16 @@ import org.hsqldb.jdbc.JDBCPool;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Answers;
+import org.mockito.MockSettings;
+import org.mockito.Mockito;
 
 import java.util.Collection;
 import java.util.Map;
 
 import javax.sql.DataSource;
+
+import be.joengenduvel.java.verifiers.ToStringVerifier;
 
 public class LiquibaseConfigTest {
 
@@ -130,6 +136,16 @@ public class LiquibaseConfigTest {
     assertThat(builder.hashCode(), not(is(Builder.of(new JDBCPool()))));
     assertThat(builder, not(is(builderClone)));
     assertThat(builder.equals(null), is(false));
+  }
+
+  @Test
+  public void shouldPassHashCodeForBuilder() throws Exception {
+    DataSource firstDataSource = mock(DataSource.class);
+    DataSource secondDataSource = mock(DataSource.class);
+
+    assertThat(Builder.of(firstDataSource).hashCode(),
+        not(is(Builder.of(secondDataSource).hashCode())));
+    assertThat(Builder.of(firstDataSource).hashCode(), is(Builder.of(firstDataSource).hashCode()));
   }
 
   @Test

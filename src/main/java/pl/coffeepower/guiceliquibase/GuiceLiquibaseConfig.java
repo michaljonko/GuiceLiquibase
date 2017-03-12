@@ -11,7 +11,7 @@ import java.util.Set;
 
 public final class GuiceLiquibaseConfig {
 
-  private final ImmutableSet<LiquibaseConfig> configs;
+  private final Set<LiquibaseConfig> configs;
 
   private GuiceLiquibaseConfig(Collection<LiquibaseConfig> configs) {
     this.configs = ImmutableSet.copyOf(configs);
@@ -65,6 +65,13 @@ public final class GuiceLiquibaseConfig {
       return new Builder(Sets.newHashSet());
     }
 
+    /**
+     * Creates new builder for <code>GuiceLiquibaseConfig</code> with defined config element.
+     *
+     * @param config <code>LiquibaseConfig</code> instance added at the beginning
+     * @return new Builder instance
+     * @throws NullPointerException when config is null
+     */
     public static Builder of(LiquibaseConfig config) {
       return new Builder(
           Sets.newHashSet(Preconditions.checkNotNull(config, "config must be defined.")));
@@ -73,27 +80,31 @@ public final class GuiceLiquibaseConfig {
     /**
      * Adds <code>LiquibaseConfig</code> instance to the set of configuration.
      *
-     * @param config <code>LiquibaseConfig</code> object
+     * @param config <code>LiquibaseConfig</code> object - cannot be null
      * @return itself
+     * @throws NullPointerException when config is null
      */
     public final Builder withLiquibaseConfig(LiquibaseConfig config) {
-      configs.add(Preconditions.checkNotNull(config));
+      configs.add(Preconditions.checkNotNull(config, "config must be defined."));
       return this;
     }
 
     /**
      * Adds <code>LiquibaseConfig</code> instances to the set of configuration.
      *
-     * @param configs <code>LiquibaseConfig</code> object
+     * @param configs <code>LiquibaseConfig</code> objects collection without null elements
      * @return itself
+     * @throws NullPointerException when null element is in the collection or collection is null
      */
     public final Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
-      Preconditions.checkNotNull(configs).forEach(this::withLiquibaseConfig);
+      Preconditions.checkNotNull(configs, "configs must be defined.")
+          .forEach(this::withLiquibaseConfig);
       return this;
     }
 
     /**
-     * Creates new <code>GuiceLiquibaseConfig</code> object.
+     * Creates new <code>GuiceLiquibaseConfig</code> object from defined
+     * <code>LiquibaseConfig</code> objects.
      *
      * @return new <code>GuiceLiquibaseConfig</code> object
      */

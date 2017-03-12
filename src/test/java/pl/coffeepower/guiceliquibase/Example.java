@@ -14,6 +14,7 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase;
@@ -28,6 +29,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
+@Ignore
 public class Example {
 
   @SuppressWarnings("checkstyle:javadocmethod")
