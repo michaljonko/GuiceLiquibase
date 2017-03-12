@@ -129,7 +129,7 @@ public final class LiquibaseConfig {
   }
 
   /**
-   * Builder for <code>GuiceLiquibaseConfig</code>.
+   * Builder for <code>LiquibaseConfig</code>.
    */
   public static final class Builder {
 
@@ -154,10 +154,24 @@ public final class LiquibaseConfig {
       this.parameters = new HashMap<>();
     }
 
+    /**
+     * Creates new builder for <code>LiquibaseConfig</code> with defined DataSource element.
+     *
+     * @param dataSource <code>DataSource</code> used for Liquibase connection
+     * @return new Builder instance
+     * @throws NullPointerException when dataSource is null
+     */
     public static Builder of(DataSource dataSource) {
       return new Builder(Preconditions.checkNotNull(dataSource, "dataSource must be defined."));
     }
 
+    /**
+     * Creates new builder for <code>LiquibaseConfig</code> as a copy of passed builder instance.
+     *
+     * @param builder instance used as a source for new builder
+     * @return new Builder instance with all properties from passed one
+     * @throws NullPointerException when builder argument is null
+     */
     @VisibleForTesting
     static Builder of(Builder builder) {
       Builder copy = of(Preconditions.checkNotNull(builder, "builder cannot be null.").dataSource)
@@ -170,31 +184,76 @@ public final class LiquibaseConfig {
       return copy;
     }
 
+    /**
+     * Sets path to ChangeLog file used by Liquibase.
+     *
+     * @param value path as a String to ChangeLog file
+     * @return itself
+     */
     public final Builder withChangeLogPath(String value) {
       this.changeLogPath = value;
       return this;
     }
 
+    /**
+     * Sets <code>ResourceAccessor</code> used to find and load ChangeLog file.
+     *
+     * @param value <code>ResourceAccessor</code> instance
+     * @return itself
+     */
     public final Builder withResourceAccessor(ResourceAccessor value) {
       this.resourceAccessor = value;
       return this;
     }
 
+    /**
+     * Should drop all tables for used database at the beginning of Liquibase execution.
+     *
+     * @param value true/false flag
+     * @return itself
+     */
     public final Builder withDropFirst(boolean value) {
       this.dropFirst = value;
       return this;
     }
 
+    /**
+     * Adds context which will be used in Liquibase changeSets execution. It will create a set of
+     * contexts and pass it to Liquibase.
+     * Context can contains a set of contexts in format like 'context1, context2, context3'. It will
+     * be split and added to the set. Null string will be converted to empty one.
+     *
+     * @param value context
+     * @return itself
+     */
     public final Builder addContext(String value) {
       this.contexts.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(Strings.nullToEmpty(value)));
       return this;
     }
 
+    /**
+     * Adds label which will be used in Liquibase changeSets execution. It will create a set of
+     * labels and pass it to Liquibase.
+     * Label can contains a set of labels in format like 'lab1, lab2, lab3'. It will be split and
+     * added to the set. Null string will be converted to empty one.
+     *
+     * @param value label
+     * @return itself
+     */
     public final Builder addLabel(String value) {
       this.labels.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(Strings.nullToEmpty(value)));
       return this;
     }
 
+    /**
+     * Adds parameter which will be used in Liquibase changeSets execution. It will create a map of
+     * parameters that will be passed to Liquibase.
+     * Key as a null will be converted to empty string.
+     *
+     * @param key   key of the parameter
+     * @param value value of the parameter
+     * @return itself
+     */
     public final Builder addParameter(String key, String value) {
       if (!Strings.isNullOrEmpty(key)) {
         parameters.put(key, value);
@@ -202,6 +261,13 @@ public final class LiquibaseConfig {
       return this;
     }
 
+    /**
+     * Creates new <code>LiquibaseConfig</code> object for defined properties.
+     *
+     * @return new <code>LiquibaseConfig</code> object
+     * @throws IllegalArgumentException when changeLogPath is null or empty
+     * @throws NullPointerException     when resourceAccessor is null
+     */
     public final LiquibaseConfig build() {
       Preconditions.checkArgument(
           !Strings.isNullOrEmpty(this.changeLogPath), "changeLogPath must be defined.");
