@@ -17,7 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase;
+import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -81,7 +81,7 @@ public class Example {
       return dataSource;
     }
 
-    @GuiceLiquibase
+    @GuiceLiquibaseConfiguration
     @Provides
     @Inject
     private GuiceLiquibaseConfig createLiquibaseConfig(DataSource dataSource) {
@@ -90,9 +90,9 @@ public class Example {
               .withChangeLogPath("liquibase/exampleChangeLog.xml")
               .withResourceAccessor(new ClassLoaderResourceAccessor(getClass().getClassLoader()))
               .withDropFirst(true)
-              .addContext("")
-              .addLabel("")
-              .addParameter("param", "value")
+              .withContext("")
+              .withLabel("")
+              .withParameter("param", "value")
               .build())
           .build();
     }

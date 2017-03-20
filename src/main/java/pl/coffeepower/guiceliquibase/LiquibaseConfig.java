@@ -1,8 +1,10 @@
 package pl.coffeepower.guiceliquibase;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -54,15 +56,15 @@ public final class LiquibaseConfig {
                           Collection<String> contexts,
                           Collection<String> labels,
                           Map<String, String> parameters) {
-    this.dataSource = Preconditions.checkNotNull(dataSource, "dataSource must be defined.");
+    this.dataSource = checkNotNull(dataSource, "dataSource must be defined.");
     this.resourceAccessor =
-        Preconditions.checkNotNull(resourceAccessor, "resourceAccessor must be defined.");
+        checkNotNull(resourceAccessor, "resourceAccessor must be defined.");
     this.changeLogPath =
-        Preconditions.checkNotNull(changeLogPath, "changeLogPath must be defined.");
+        checkNotNull(changeLogPath, "changeLogPath must be defined.");
     this.dropFirst = dropFirst;
-    this.contexts = ImmutableSet.copyOf(Preconditions.checkNotNull(contexts));
-    this.labels = ImmutableSet.copyOf(Preconditions.checkNotNull(labels));
-    this.parameters = ImmutableMap.copyOf(Preconditions.checkNotNull(parameters));
+    this.contexts = ImmutableSet.copyOf(checkNotNull(contexts));
+    this.labels = ImmutableSet.copyOf(checkNotNull(labels));
+    this.parameters = ImmutableMap.copyOf(checkNotNull(parameters));
   }
 
   public final DataSource getDataSource() {
@@ -162,7 +164,7 @@ public final class LiquibaseConfig {
      * @throws NullPointerException when dataSource is null
      */
     public static Builder of(DataSource dataSource) {
-      return new Builder(Preconditions.checkNotNull(dataSource, "dataSource must be defined."));
+      return new Builder(checkNotNull(dataSource, "dataSource must be defined."));
     }
 
     /**
@@ -174,13 +176,13 @@ public final class LiquibaseConfig {
      */
     @VisibleForTesting
     static Builder of(Builder builder) {
-      Builder copy = of(Preconditions.checkNotNull(builder, "builder cannot be null.").dataSource)
+      Builder copy = of(checkNotNull(builder, "builder cannot be null.").dataSource)
           .withChangeLogPath(builder.changeLogPath)
           .withDropFirst(builder.dropFirst)
           .withResourceAccessor(builder.resourceAccessor);
-      builder.contexts.forEach(copy::addContext);
-      builder.labels.forEach(copy::addLabel);
-      builder.parameters.forEach(copy::addParameter);
+      builder.contexts.forEach(copy::withContext);
+      builder.labels.forEach(copy::withLabel);
+      builder.parameters.forEach(copy::withParameter);
       return copy;
     }
 
@@ -226,8 +228,23 @@ public final class LiquibaseConfig {
      * @param value context
      * @return itself
      */
-    public final Builder addContext(String value) {
+    public final Builder withContext(String value) {
       this.contexts.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(Strings.nullToEmpty(value)));
+      return this;
+    }
+
+    /**
+     * Adds contexts from passed collection. Internally is using <code>withContext</code>
+     * for each element of the collection.
+     *
+     * @param value contexts
+     * @return itself
+     * @throws NullPointerException when passed argument is null
+     * @see LiquibaseConfig.Builder#withContext(String)
+     */
+    public final Builder withContexts(Collection<String> value) {
+      checkNotNull(value, "contexts must be defined.")
+          .forEach(this::withContext);
       return this;
     }
 
@@ -240,8 +257,23 @@ public final class LiquibaseConfig {
      * @param value label
      * @return itself
      */
-    public final Builder addLabel(String value) {
+    public final Builder withLabel(String value) {
       this.labels.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(Strings.nullToEmpty(value)));
+      return this;
+    }
+
+    /**
+     * Adds labels from passed collection. Internally is using <code>withLabel</code> for
+     * each element of the collection.
+     *
+     * @param value labels
+     * @return itself
+     * @throws NullPointerException when passed argument is null
+     * @see LiquibaseConfig.Builder#withLabel(String)
+     */
+    public final Builder withLabels(Collection<String> value) {
+      checkNotNull(value, "labels must be defined.")
+          .forEach(this::withLabel);
       return this;
     }
 
@@ -254,10 +286,25 @@ public final class LiquibaseConfig {
      * @param value value of the parameter
      * @return itself
      */
-    public final Builder addParameter(String key, String value) {
+    public final Builder withParameter(String key, String value) {
       if (!Strings.isNullOrEmpty(key)) {
         parameters.put(key, value);
       }
+      return this;
+    }
+
+    /**
+     * Adds parameters from map. Internally is using <conde>withParameter</conde> for each pair of
+     * the map (key, value).
+     *
+     * @param map parameters
+     * @return itself
+     * @throws NullPointerException when passed map is null
+     * @see LiquibaseConfig.Builder#withParameter(String, String)
+     */
+    public final Builder withParameters(Map<String, String> map) {
+      checkNotNull(map, "parameters must be defined.")
+          .forEach(this::withParameter);
       return this;
     }
 
@@ -269,9 +316,9 @@ public final class LiquibaseConfig {
      * @throws NullPointerException     when resourceAccessor is null
      */
     public final LiquibaseConfig build() {
-      Preconditions.checkArgument(
+      checkArgument(
           !Strings.isNullOrEmpty(this.changeLogPath), "changeLogPath must be defined.");
-      Preconditions.checkNotNull(this.resourceAccessor, "resourceAccessor must be defined.");
+      checkNotNull(this.resourceAccessor, "resourceAccessor must be defined.");
       return new LiquibaseConfig(
           this.dataSource,
           this.changeLogPath,
