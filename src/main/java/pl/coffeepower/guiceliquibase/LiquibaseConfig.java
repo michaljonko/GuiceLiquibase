@@ -294,7 +294,7 @@ public final class LiquibaseConfig {
     }
 
     /**
-     * Adds parameters from map. Internally is using <conde>withParameter</conde> for each pair of
+     * Adds parameters from map. Internally is using <code>withParameter</code> for each pair of
      * the map (key, value).
      *
      * @param map parameters

@@ -11,6 +11,8 @@ import static pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig.Builder;
 
 import com.google.common.collect.Lists;
 
+import be.joengenduvel.java.verifiers.ToStringVerifier;
+
 import nl.jqno.equalsverifier.EqualsVerifier;
 
 import org.hsqldb.jdbc.JDBCDataSource;
@@ -21,8 +23,6 @@ import org.junit.rules.ExpectedException;
 import java.util.List;
 
 import javax.sql.DataSource;
-
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 
 public class GuiceLiquibaseConfigTest {
 
@@ -62,7 +62,8 @@ public class GuiceLiquibaseConfigTest {
 
     assertThat(config, notNullValue());
     assertThat(config.getConfigs(), hasSize(2));
-    assertThat(config.getConfigs(), containsInAnyOrder(firstLiquibaseConfig, secondLiquibaseConfig));
+    assertThat(config.getConfigs(),
+        containsInAnyOrder(firstLiquibaseConfig, secondLiquibaseConfig));
   }
 
   @Test

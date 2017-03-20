@@ -80,7 +80,7 @@ bintray {
         publicDownloadNumbers = true
         version {
             name = appVersion
-            desc = "GuiceLiquibase snpashot version"
+            desc = "GuiceLiquibase snapshot version"
             released = new Date()
             vcsTag = appVersion
         }

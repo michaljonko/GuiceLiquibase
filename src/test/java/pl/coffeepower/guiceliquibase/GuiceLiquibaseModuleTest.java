@@ -26,6 +26,8 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Stage;
 
+import be.joengenduvel.java.verifiers.ToStringVerifier;
+
 import liquibase.configuration.GlobalConfiguration;
 import liquibase.configuration.LiquibaseConfiguration;
 import liquibase.database.Database;
@@ -52,8 +54,6 @@ import java.util.UUID;
 
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 
 public class GuiceLiquibaseModuleTest {
 
@@ -150,12 +150,13 @@ public class GuiceLiquibaseModuleTest {
     injector.getInstance(GuiceLiquibaseModule.LiquibaseEngine.class)
         .process();
 
-    injector.getInstance(Key.get(GuiceLiquibaseConfig.class, GuiceLiquibaseConfiguration.class)).getConfigs()
+    injector.getInstance(Key.get(GuiceLiquibaseConfig.class, GuiceLiquibaseConfiguration.class))
+        .getConfigs()
         .forEach(liquibaseConfig -> {
           try {
             DataSource dataSource = liquibaseConfig.getDataSource();
             verify(dataSource, only()).getConnection();
-          } catch (SQLException e) {
+          } catch (SQLException ex) {
             fail();
           }
         });
