@@ -1,5 +1,6 @@
 # GuiceLiquibase
 Liquibase extension to easy use with Guice. Inspired by [*CDI Liquibase*](http://www.liquibase.org/documentation/cdi.html) - there is no support for *Google Guice* at the moment.
+Please check Example.java file for development details.
 
 ## Example
 ```java
@@ -28,18 +29,17 @@ public class Example {
       dataSource.setUser("SA");
       return dataSource;
     }
-
-    @LiquibaseConfig
+    
+    @GuiceLiquibaseConfiguration
     @Provides
     @Inject
     private GuiceLiquibaseConfig createLiquibaseConfig(DataSource dataSource) {
-      return GuiceLiquibaseConfig.Builder.createConfigSet()
-          .withLiquibaseConfig(
-              new GuiceLiquibaseConfig.LiquibaseConfig(
-                  dataSource,
-                  "liquibase/exampleChangeLog.xml"))
+      return GuiceLiquibaseConfig.Builder
+          .of(LiquibaseConfig.Builder.of(dataSource)
+              .withChangeLogPath("liquibase/exampleChangeLog.xml")
+              .build())
           .build();
-    }
+    }    
   }
 }
 ```

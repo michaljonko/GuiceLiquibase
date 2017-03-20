@@ -5,8 +5,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.Monitor;
+import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;
+import com.google.inject.Stage;
 
 import liquibase.Contexts;
 import liquibase.LabelExpression;
@@ -25,7 +27,7 @@ import liquibase.util.LiquibaseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibase;
+import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -34,10 +36,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
-public final class GuiceLiquibaseModule extends PrivateModule {
+public final class GuiceLiquibaseModule extends AbstractModule {
 
   private static final Key<GuiceLiquibaseConfig> LIQUIBASE_CONFIG_KEY =
-      Key.get(GuiceLiquibaseConfig.class, GuiceLiquibase.class);
+      Key.get(GuiceLiquibaseConfig.class, GuiceLiquibaseConfiguration.class);
 
   @Override
   protected void configure() {
@@ -68,28 +70,31 @@ public final class GuiceLiquibaseModule extends PrivateModule {
     private final AtomicBoolean updated;
 
     @Inject
-    private GuiceLiquibaseEngine(@GuiceLiquibase GuiceLiquibaseConfig config) {
+    private GuiceLiquibaseEngine(@GuiceLiquibaseConfiguration GuiceLiquibaseConfig config) {
       LOGGER.info("Creating GuiceLiquibase for Liquibase {}", LiquibaseUtil.getBuildVersion());
       checkArgument(!config.getConfigs().isEmpty(), "Injected configuration set is empty.");
       this.config = config;
       this.updated = new AtomicBoolean(false);
-      this.monitor = new Monitor();
+      this.monitor = new Monitor(true);
     }
 
     @Override
     public void process() throws LiquibaseException {
-      monitor.enter();
-      try {
-        if (updated.get()) {
-          LOGGER.warn("Liquibase update has been already executed.");
-        } else if (shouldExecuteLiquibaseUpdate()) {
-          for (LiquibaseConfig liquibaseConfig : config.getConfigs()) {
-            executeLiquibaseUpdate(liquibaseConfig);
+      if (monitor.tryEnter()) {
+        try {
+          if (updated.get()) {
+            LOGGER.warn("Liquibase update has been already executed.");
+          } else if (shouldExecuteLiquibaseUpdate()) {
+            for (LiquibaseConfig liquibaseConfig : config.getConfigs()) {
+              executeLiquibaseUpdate(liquibaseConfig);
+            }
           }
+        } finally {
+          updated.compareAndSet(false, true);
+          monitor.leave();
         }
-      } finally {
-        updated.compareAndSet(false, true);
-        monitor.leave();
+      } else {
+        LOGGER.warn("Liquibase update is running.");
       }
     }
 

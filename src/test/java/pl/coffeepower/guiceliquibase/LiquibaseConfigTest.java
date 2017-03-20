@@ -8,13 +8,13 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+
+import be.joengenduvel.java.verifiers.ToStringVerifier;
 
 import liquibase.resource.ResourceAccessor;
 import liquibase.sdk.resource.MockResourceAccessor;
@@ -26,16 +26,11 @@ import org.hsqldb.jdbc.JDBCPool;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.Answers;
-import org.mockito.MockSettings;
-import org.mockito.Mockito;
 
 import java.util.Collection;
 import java.util.Map;
 
 import javax.sql.DataSource;
-
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 
 public class LiquibaseConfigTest {
 
@@ -47,10 +42,10 @@ public class LiquibaseConfigTest {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE)
         .withChangeLogPath(Fixtures.CHANGELOG_PATH)
         .withDropFirst(Fixtures.DROP_FIRST)
-        .withResourceAccessor(Fixtures.RESOURCE_ACCESSOR);
-    Fixtures.CONTEXT.forEach(builder::addContext);
-    Fixtures.LABELS.forEach(builder::addLabel);
-    Fixtures.PARAMETERS.forEach(builder::addParameter);
+        .withResourceAccessor(Fixtures.RESOURCE_ACCESSOR)
+        .withContexts(Fixtures.CONTEXT)
+        .withLabels(Fixtures.LABELS)
+        .withParameters(Fixtures.PARAMETERS);
 
     LiquibaseConfig config = builder.build();
 
@@ -73,19 +68,19 @@ public class LiquibaseConfigTest {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE)
         .withChangeLogPath(Fixtures.CHANGELOG_PATH)
         .withDropFirst(Fixtures.DROP_FIRST)
-        .withResourceAccessor(Fixtures.RESOURCE_ACCESSOR);
-    Fixtures.CONTEXT.forEach(builder::addContext);
-    Fixtures.LABELS.forEach(builder::addLabel);
-    Fixtures.PARAMETERS.forEach(builder::addParameter);
+        .withResourceAccessor(Fixtures.RESOURCE_ACCESSOR)
+        .withContexts(Fixtures.CONTEXT)
+        .withLabels(Fixtures.LABELS)
+        .withParameters(Fixtures.PARAMETERS);
 
     assertThat(builder, is(Builder.of(builder)));
     assertThat(builder, not(sameInstance(Builder.of(builder))));
-    assertThat(builder, is(Builder.of(builder).addContext("")));
-    assertThat(builder, not(is(Builder.of(builder).addContext("X"))));
-    assertThat(builder, is(Builder.of(builder).addLabel("")));
-    assertThat(builder, not(is(Builder.of(builder).addLabel("X"))));
-    assertThat(builder, is(Builder.of(builder).addParameter("", "")));
-    assertThat(builder, not(is(Builder.of(builder).addParameter("k", "v"))));
+    assertThat(builder, is(Builder.of(builder).withContext("")));
+    assertThat(builder, not(is(Builder.of(builder).withContext("X"))));
+    assertThat(builder, is(Builder.of(builder).withLabel("")));
+    assertThat(builder, not(is(Builder.of(builder).withLabel("X"))));
+    assertThat(builder, is(Builder.of(builder).withParameter("", "")));
+    assertThat(builder, not(is(Builder.of(builder).withParameter("k", "v"))));
   }
 
   @Test
@@ -128,7 +123,8 @@ public class LiquibaseConfigTest {
   @Test
   public void shouldPassEqualsAndHashCodeContractsForBuilder() throws Exception {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE);
-    Builder builderClone = Builder.of(builder).withChangeLogPath(Fixtures.CHANGELOG_PATH);
+    Builder builderClone = Builder.of(builder)
+        .withChangeLogPath(Fixtures.CHANGELOG_PATH);
 
     assertThat(builder.hashCode(), is(builder.hashCode()));
     assertThat(builder, is(builder));

@@ -1,5 +1,7 @@
 package pl.coffeepower.guiceliquibase;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -74,7 +76,7 @@ public final class GuiceLiquibaseConfig {
      */
     public static Builder of(LiquibaseConfig config) {
       return new Builder(
-          Sets.newHashSet(Preconditions.checkNotNull(config, "config must be defined.")));
+          Sets.newHashSet(checkNotNull(config, "config must be defined.")));
     }
 
     /**
@@ -85,7 +87,7 @@ public final class GuiceLiquibaseConfig {
      * @throws NullPointerException when config is null
      */
     public final Builder withLiquibaseConfig(LiquibaseConfig config) {
-      configs.add(Preconditions.checkNotNull(config, "config must be defined."));
+      configs.add(checkNotNull(config, "config must be defined."));
       return this;
     }
 
@@ -97,7 +99,7 @@ public final class GuiceLiquibaseConfig {
      * @throws NullPointerException when null element is in the collection or collection is null
      */
     public final Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
-      Preconditions.checkNotNull(configs, "configs must be defined.")
+      checkNotNull(configs, "configs must be defined.")
           .forEach(this::withLiquibaseConfig);
       return this;
     }
