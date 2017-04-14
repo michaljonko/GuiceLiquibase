@@ -1,6 +1,7 @@
 # Changelog
 ---
 
+- #### 0.0.3
 - #### 0.0.2
     - added CHANGELOG.md
     - moved _LiquibaseConfig_ inner class to separate upper level
