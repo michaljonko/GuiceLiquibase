@@ -7,13 +7,10 @@ import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
-import com.google.inject.PrivateModule;
-import com.google.inject.Stage;
 
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
-import liquibase.changelog.DatabaseChangeLog;
 import liquibase.configuration.GlobalConfiguration;
 import liquibase.configuration.LiquibaseConfiguration;
 import liquibase.database.Database;
@@ -80,15 +77,13 @@ public final class GuiceLiquibaseModule extends AbstractModule {
     }
 
     @Override
-    public void process() throws LiquibaseException {
+    public void process() {
       if (monitor.tryEnter()) {
         try {
           if (updated.get()) {
             LOGGER.warn("Liquibase update has been already executed.");
           } else if (shouldExecuteLiquibaseUpdate()) {
-            for (LiquibaseConfig liquibaseConfig : config.getConfigs()) {
-              executeLiquibaseUpdate(liquibaseConfig);
-            }
+            config.getConfigs().forEach(this::executeLiquibaseUpdate);
           }
         } finally {
           updated.compareAndSet(false, true);
@@ -113,7 +108,7 @@ public final class GuiceLiquibaseModule extends AbstractModule {
       return shouldRun;
     }
 
-    private void executeLiquibaseUpdate(LiquibaseConfig config) throws LiquibaseException {
+    private void executeLiquibaseUpdate(LiquibaseConfig config) {
       LOGGER.info("Applying changes for {}", config.toString());
       Connection connection = null;
       Database database = null;
@@ -122,9 +117,10 @@ public final class GuiceLiquibaseModule extends AbstractModule {
             .getConnection();
         DatabaseConnection databaseConnection = new JdbcConnection(
             checkNotNull(connection, "DataSource returns null connection instance."));
-        database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(
-            checkNotNull(databaseConnection, "DatabaseConnection created from DataSource "
-                + "cannot be null."));
+        database = DatabaseFactory.getInstance()
+            .findCorrectDatabaseImplementation(
+                checkNotNull(databaseConnection,
+                    "DatabaseConnection created from DataSource cannot be null."));
         Liquibase liquibase = new Liquibase(
             config.getChangeLogPath(),
             config.getResourceAccessor(),
@@ -139,19 +135,23 @@ public final class GuiceLiquibaseModule extends AbstractModule {
             new LabelExpression(config.getLabels()));
       } catch (SQLException exception) {
         LOGGER.error("Problem during SQL and JDBC calls.", exception);
-        throw new DatabaseException(exception);
+        throw new UnexpectedLiquibaseException(exception);
       } catch (LiquibaseException exception) {
         LOGGER.error("Problem during Liquibase calls.", exception);
-        throw exception;
+        throw new UnexpectedLiquibaseException(exception);
       } finally {
         if (database != null) {
-          database.close();
+          try {
+            database.close();
+          } catch (DatabaseException exception) {
+            LOGGER.error("Problem during database.close() call.", exception);
+          }
         } else if (connection != null) {
           try {
             connection.rollback();
             connection.close();
           } catch (SQLException exception) {
-            LOGGER.error("Problem during closing connection.", exception);
+            LOGGER.error("Problem during connection closing.", exception);
           }
         }
       }

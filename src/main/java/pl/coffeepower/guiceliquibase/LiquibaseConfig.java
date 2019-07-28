@@ -221,9 +221,9 @@ public final class LiquibaseConfig {
 
     /**
      * Adds context which will be used in Liquibase changeSets execution. It will create a set of
-     * contexts and pass it to Liquibase.
-     * Context can contains a set of contexts in format like 'context1, context2, context3'. It will
-     * be split and added to the set. Null string will be converted to empty one.
+     * contexts and pass it to Liquibase. Context can contains a set of contexts in format like
+     * 'context1, context2, context3'. It will be split and added to the set. Null string will be
+     * converted to empty one.
      *
      * @param value context
      * @return itself
@@ -234,8 +234,8 @@ public final class LiquibaseConfig {
     }
 
     /**
-     * Adds contexts from passed collection. Internally is using <code>withContext</code>
-     * for each element of the collection.
+     * Adds contexts from passed collection. Internally is using <code>withContext</code> for each
+     * element of the collection.
      *
      * @param value contexts
      * @return itself
@@ -250,9 +250,9 @@ public final class LiquibaseConfig {
 
     /**
      * Adds label which will be used in Liquibase changeSets execution. It will create a set of
-     * labels and pass it to Liquibase.
-     * Label can contains a set of labels in format like 'lab1, lab2, lab3'. It will be split and
-     * added to the set. Null string will be converted to empty one.
+     * labels and pass it to Liquibase. Label can contains a set of labels in format like 'lab1,
+     * lab2, lab3'. It will be split and added to the set. Null string will be converted to empty
+     * one.
      *
      * @param value label
      * @return itself
@@ -263,8 +263,8 @@ public final class LiquibaseConfig {
     }
 
     /**
-     * Adds labels from passed collection. Internally is using <code>withLabel</code> for
-     * each element of the collection.
+     * Adds labels from passed collection. Internally is using <code>withLabel</code> for each
+     * element of the collection.
      *
      * @param value labels
      * @return itself
@@ -279,8 +279,8 @@ public final class LiquibaseConfig {
 
     /**
      * Adds parameter which will be used in Liquibase changeSets execution. It will create a map of
-     * parameters that will be passed to Liquibase.
-     * Key as a null will be converted to empty string.
+     * parameters that will be passed to Liquibase. Key as a null will be converted to empty
+     * string.
      *
      * @param key   key of the parameter
      * @param value value of the parameter
@@ -294,8 +294,8 @@ public final class LiquibaseConfig {
     }
 
     /**
-     * Adds parameters from map. Internally is using <code>withParameter</code> for each pair of
-     * the map (key, value).
+     * Adds parameters from map. Internally is using <code>withParameter</code> for each pair of the
+     * map (key, value).
      *
      * @param map parameters
      * @return itself
