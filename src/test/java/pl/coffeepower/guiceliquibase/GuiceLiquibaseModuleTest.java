@@ -61,7 +61,7 @@ public class GuiceLiquibaseModuleTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   @BeforeClass
-  public static void beforeClass() throws Exception {
+  public static void beforeClass() {
     try {
       Class.forName("org.hsqldb.jdbc.JDBCDriver");
     } catch (ClassNotFoundException exception) {
@@ -112,7 +112,7 @@ public class GuiceLiquibaseModuleTest {
   }
 
   @Test
-  public void shouldNotExecuteUpdateWhenShouldRunIsDisabled() throws Exception {
+  public void shouldNotExecuteUpdateWhenShouldRunIsDisabled() {
     DataSource dataSource = mock(DataSource.class);
 
     try {
@@ -163,18 +163,16 @@ public class GuiceLiquibaseModuleTest {
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedRequiredBinding() throws Exception {
+  public void shouldThrowExceptionForNotDefinedRequiredBinding() {
     expectedException.expect(CreationException.class);
     expectedException.expectMessage(containsString("Unable to create injector"));
-    expectedException.expectMessage(containsString("No implementation for "
-        + "pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig annotated with interface "
-        + "pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration was bound."));
+    expectedException.expectMessage(containsString("No implementation for GuiceLiquibaseConfig annotated with @GuiceLiquibaseConfiguration() was bound"));
 
-    Guice.createInjector(new GuiceLiquibaseModule());
+	Guice.createInjector(new GuiceLiquibaseModule());
   }
 
   @Test
-  public void shouldThrowExceptionForNullConfigValue() throws Exception {
+  public void shouldThrowExceptionForNullConfigValue() {
     expectedException.expect(CreationException.class);
     expectedException.expectMessage(containsString("Unable to create injector"));
     expectedException.expectMessage(containsString("Binding to null instances is not allowed."));
@@ -191,7 +189,7 @@ public class GuiceLiquibaseModuleTest {
   }
 
   @Test
-  public void shouldThrowExceptionForEmptyConfigurationSet() throws Exception {
+  public void shouldThrowExceptionForEmptyConfigurationSet() {
     expectedException.expect(CreationException.class);
     expectedException.expectMessage(containsString("Injected configuration set is empty."));
     expectedException.expectCause(instanceOf(IllegalArgumentException.class));
@@ -314,7 +312,7 @@ public class GuiceLiquibaseModuleTest {
   }
 
   @Test
-  public void shouldPassEqualsAndHashCodeContractsInGuiceLiquibaseEngine() throws Exception {
+  public void shouldPassEqualsAndHashCodeContractsInGuiceLiquibaseEngine() {
     EqualsVerifier.forClass(getGuiceLiquibaseEngineClass())
         .usingGetClass()
         .withPrefabValues(
@@ -332,7 +330,7 @@ public class GuiceLiquibaseModuleTest {
   }
 
   @Test
-  public void verifyToStringInGuiceLiquibaseEngine() throws Exception {
+  public void verifyToStringInGuiceLiquibaseEngine() {
     GuiceLiquibaseModule.LiquibaseEngine liquibaseEngine = Guice.createInjector(
         new AbstractModule() {
 

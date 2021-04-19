@@ -2,8 +2,10 @@ package pl.coffeepower.guiceliquibase;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.nonNull;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.io.Closer;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
@@ -109,9 +111,10 @@ public final class GuiceLiquibaseModule extends AbstractModule {
     }
 
     private void executeLiquibaseUpdate(LiquibaseConfig config) {
-      LOGGER.info("Applying changes for {}", config.toString());
+      LOGGER.info("Applying changes for {}", config);
       Connection connection = null;
       Database database = null;
+      Liquibase liquibase = null;
       try {
         connection = checkNotNull(config.getDataSource(), "DataSource must be defined.")
             .getConnection();
@@ -121,7 +124,7 @@ public final class GuiceLiquibaseModule extends AbstractModule {
             .findCorrectDatabaseImplementation(
                 checkNotNull(databaseConnection,
                     "DatabaseConnection created from DataSource cannot be null."));
-        Liquibase liquibase = new Liquibase(
+        liquibase = new Liquibase(
             config.getChangeLogPath(),
             config.getResourceAccessor(),
             database);
@@ -140,15 +143,22 @@ public final class GuiceLiquibaseModule extends AbstractModule {
         LOGGER.error("Problem during Liquibase calls.", exception);
         throw new UnexpectedLiquibaseException(exception);
       } finally {
-        if (database != null) {
+      	if(nonNull(liquibase)) {
+      	  try {
+		    liquibase.close();
+		  } catch (Exception exception) {
+		    LOGGER.error("Problem during liquibase.close() call.", exception);
+      	  }
+		}
+        if (nonNull(database)) {
           try {
             database.close();
           } catch (DatabaseException exception) {
             LOGGER.error("Problem during database.close() call.", exception);
           }
-        } else if (connection != null) {
+        }
+        if (nonNull(connection)) {
           try {
-            connection.rollback();
             connection.close();
           } catch (SQLException exception) {
             LOGGER.error("Problem during connection closing.", exception);
