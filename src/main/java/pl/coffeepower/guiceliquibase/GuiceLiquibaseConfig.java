@@ -59,7 +59,7 @@ public final class GuiceLiquibaseConfig {
      * Creates new <code>LiquibaseConfig</code> for passed DataSource and default changelog file
      * location.
      *
-     * @param dataSource DataSource where LiquiBase will be running
+     * @param dataSource DataSource where Liquibase will be running
      * @throws NullPointerException when <code>dataSource</code> is null
      * @see #DEFAULT_CHANGE_LOG_PATH
      */
@@ -70,8 +70,8 @@ public final class GuiceLiquibaseConfig {
     /**
      * Creates new <code>LiquiBaseConfig</code> for passed DataSource and changelog file location.
      *
-     * @param dataSource    DataSource where LiquiBase will be running
-     * @param changeLogPath LiquiBase changelog with all changesets
+     * @param dataSource    DataSource where Liquibase will be running
+     * @param changeLogPath Liquibase changelog with all changesets
      * @throws NullPointerException     when <code>dataSource</code> is null
      * @throws IllegalArgumentException when <code>changeLogPath</code> is null or empty
      * @link http://www.liquibase.org/documentation/databasechangelog.html
