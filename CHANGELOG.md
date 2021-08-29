@@ -1,5 +1,8 @@
 # Changelog
 ---
+- #### 0.0.6
+    - fix for closing database connection
+
 - #### 0.0.5
     - updated Guice to 5.0.1
     - updated Liquibase to 3.10.3

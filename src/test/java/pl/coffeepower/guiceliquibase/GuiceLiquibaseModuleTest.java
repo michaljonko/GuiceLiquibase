@@ -39,6 +39,8 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import nl.jqno.equalsverifier.EqualsVerifier;
 
 import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,6 +61,7 @@ public class GuiceLiquibaseModuleTest {
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
+  private DatabaseFactory orgDatabaseFactory;
 
   @BeforeClass
   public static void beforeClass() {
@@ -67,6 +70,16 @@ public class GuiceLiquibaseModuleTest {
     } catch (ClassNotFoundException exception) {
       throw new NoClassDefFoundError("Cannot find org.hsqldb.jdbc.JDBCDriver");
     }
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    orgDatabaseFactory = DatabaseFactory.getInstance();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    DatabaseFactory.setInstance(orgDatabaseFactory);
   }
 
   @Test
@@ -270,45 +283,37 @@ public class GuiceLiquibaseModuleTest {
   @Test
   public void shouldThrowExceptionWhenProblemOccurredDuringLiquibaseUpdate() throws Exception {
     expectedException.expect(CreationException.class);
-    expectedException.expectMessage(containsString("Problem while Liquibase."));
-    expectedException.expectCause(instanceOf(UnexpectedLiquibaseException.class));
 
-    DatabaseFactory oldDatabaseFactory = DatabaseFactory.getInstance();
+    DataSource dataSource = mock(DataSource.class);
+    Connection connection = mock(Connection.class);
+    DatabaseFactory databaseFactory = mock(DatabaseFactory.class);
+    Database database = mock(Database.class);
+    when(dataSource.getConnection()).thenReturn(connection);
+    when(databaseFactory.findCorrectDatabaseImplementation(any())).thenReturn(database);
+    doThrow(new DatabaseException("Problem - Liquibase.")).when(database).rollback();
+    DatabaseFactory.setInstance(databaseFactory);
 
-    try {
-      DataSource dataSource = mock(DataSource.class);
-      Connection connection = mock(Connection.class);
-      DatabaseFactory databaseFactory = mock(DatabaseFactory.class);
-      Database database = mock(Database.class);
-      when(dataSource.getConnection()).thenReturn(connection);
-      when(databaseFactory.findCorrectDatabaseImplementation(any())).thenReturn(database);
-      doThrow(new DatabaseException("Problem while Liquibase.")).when(database).rollback();
-      DatabaseFactory.setInstance(databaseFactory);
+    Guice.createInjector(
+	  new GuiceLiquibaseModule(),
+	  new AbstractModule() {
 
-      Guice.createInjector(
-          new GuiceLiquibaseModule(),
-          new AbstractModule() {
+		@Override
+		protected void configure() {
+		  bind(GuiceLiquibaseConfig.class)
+			  .annotatedWith(GuiceLiquibaseConfiguration.class)
+			  .toInstance(GuiceLiquibaseConfig.Builder
+				  .of(LiquibaseConfig.Builder
+					  .of(dataSource)
+					  .build())
+				  .build());
+		}
+	  });
 
-            @Override
-            protected void configure() {
-              bind(GuiceLiquibaseConfig.class)
-                  .annotatedWith(GuiceLiquibaseConfiguration.class)
-                  .toInstance(GuiceLiquibaseConfig.Builder
-                      .of(LiquibaseConfig.Builder
-                          .of(dataSource)
-                          .build())
-                      .build());
-            }
-          });
-
-      verify(dataSource).getConnection();
-      verify(connection).rollback();
-      verify(connection).close();
-      verify(database).close();
-      verifyNoMoreInteractions(connection, dataSource, database);
-    } finally {
-      DatabaseFactory.setInstance(oldDatabaseFactory);
-    }
+    verify(dataSource).getConnection();
+    verify(connection).rollback();
+    verify(connection).close();
+    verify(database).close();
+    verifyNoMoreInteractions(connection, dataSource, database);
   }
 
   @Test

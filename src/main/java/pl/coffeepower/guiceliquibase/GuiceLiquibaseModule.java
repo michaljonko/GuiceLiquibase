@@ -152,7 +152,9 @@ public final class GuiceLiquibaseModule extends AbstractModule {
 		}
         if (nonNull(database)) {
           try {
-            database.close();
+          	if(!database.getConnection().isClosed()) {
+          	  database.close();
+			}
           } catch (DatabaseException exception) {
             LOGGER.error("Problem during database.close() call.", exception);
           }
