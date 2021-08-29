@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -19,6 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import javax.sql.DataSource;
 
@@ -121,12 +121,12 @@ public final class LiquibaseConfig {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("changeLogPath", changeLogPath)
-        .add("dropFirst", dropFirst)
-        .add("contexts", contexts)
-        .add("labels", labels)
-        .add("parameters", parameters)
+    return new StringJoiner(", ", LiquibaseConfig.class.getSimpleName() + "[", "]")
+        .add("changeLogPath='" + changeLogPath + "'")
+        .add("dropFirst=" + dropFirst)
+        .add("contexts=" + contexts)
+        .add("labels=" + labels)
+        .add("parameters=" + parameters)
         .toString();
   }
 

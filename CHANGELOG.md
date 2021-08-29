@@ -1,5 +1,8 @@
 # Changelog
 ---
+- #### 0.0.7
+    - updated Liquibase code version
+
 - #### 0.0.6
     - fix for closing database connection
 

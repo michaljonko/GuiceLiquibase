@@ -4,8 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
 
-import com.google.common.base.MoreObjects;
-import com.google.common.io.Closer;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
@@ -32,6 +30,7 @@ import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
@@ -88,7 +87,7 @@ public final class GuiceLiquibaseModule extends AbstractModule {
             config.getConfigs().forEach(this::executeLiquibaseUpdate);
           }
         } finally {
-          updated.compareAndSet(false, true);
+          updated.getAndSet(true);
           monitor.leave();
         }
       } else {
@@ -150,7 +149,7 @@ public final class GuiceLiquibaseModule extends AbstractModule {
 		    LOGGER.error("Problem during liquibase.close() call.", exception);
       	  }
 		}
-        if (nonNull(database)) {
+        if (nonNull(database) && nonNull(database.getConnection())) {
           try {
           	if(!database.getConnection().isClosed()) {
           	  database.close();
@@ -190,10 +189,10 @@ public final class GuiceLiquibaseModule extends AbstractModule {
 
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(this)
-          .add("config", config)
-          .add("monitor", monitor)
-          .add("updated", updated)
+      return new StringJoiner(", ", GuiceLiquibaseEngine.class.getSimpleName() + "[", "]")
+          .add("monitor=" + monitor)
+          .add("config=" + config)
+          .add("updated=" + updated)
           .toString();
     }
   }

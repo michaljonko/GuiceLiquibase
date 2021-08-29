@@ -2,13 +2,13 @@ package pl.coffeepower.guiceliquibase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 
 public final class GuiceLiquibaseConfig {
 
@@ -18,7 +18,7 @@ public final class GuiceLiquibaseConfig {
     this.configs = ImmutableSet.copyOf(configs);
   }
 
-  public Set<LiquibaseConfig> getConfigs() {
+  Set<LiquibaseConfig> getConfigs() {
     return configs;
   }
 
@@ -41,8 +41,8 @@ public final class GuiceLiquibaseConfig {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("configs", configs)
+    return new StringJoiner(", ", GuiceLiquibaseConfig.class.getSimpleName() + "[", "]")
+        .add("configs=" + configs)
         .toString();
   }
 
