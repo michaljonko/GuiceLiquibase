@@ -4,9 +4,7 @@ task wrapper(type: Wrapper) {
 
 buildscript {
     repositories {
-        maven {
-            url 'https://plugins.gradle.org/m2/'
-        }
+        jcenter()
     }
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
@@ -14,9 +12,11 @@ buildscript {
 }
 
 apply plugin: 'java'
+apply plugin: 'signing'
+//apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-defaultTasks 'clean', 'build'
+defaultTasks 'clean', 'build', 'shadowJar'
 
 group = 'pl.coffeepower.guiceliquibase'
 version = new File('version.txt').text
@@ -27,11 +27,8 @@ compileJava {
     options.encoding = 'UTF-8'
 }
 
-
 repositories {
     mavenCentral()
-    jcenter()
-    mavenLocal()
 }
 
 dependencies {

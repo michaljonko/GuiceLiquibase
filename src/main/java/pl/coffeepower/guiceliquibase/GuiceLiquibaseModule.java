@@ -1,9 +1,11 @@
 package pl.coffeepower.guiceliquibase;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;
+
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -17,17 +19,17 @@ import liquibase.exception.LiquibaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.util.LiquibaseUtil;
+
 import pl.coffeepower.guiceliquibase.annotation.LiquibaseConfig;
 
-import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.logging.Logger;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.inject.Inject;
+
 
 public final class GuiceLiquibaseModule extends PrivateModule {
 
@@ -44,8 +46,8 @@ public final class GuiceLiquibaseModule extends PrivateModule {
     private void executeGuiceLiquibase(GuiceLiquibase guiceLiquibase) {
         try {
             guiceLiquibase.executeUpdate();
-        } catch (LiquibaseException e) {
-            throw new UnexpectedLiquibaseException(e);
+        } catch (LiquibaseException exception) {
+            throw new UnexpectedLiquibaseException(exception);
         }
     }
 
@@ -61,8 +63,10 @@ public final class GuiceLiquibaseModule extends PrivateModule {
         @Inject
         private GuiceLiquibase(@LiquibaseConfig GuiceLiquibaseConfig config) {
             LOGGER.info("Creating GuiceLiquibase for Liquibase " + LiquibaseUtil.getBuildVersion());
-            checkArgument(config != null, "Injected GuiceLiquibaseConfig cannot be null.");
-            checkArgument(!config.getConfigs().isEmpty(), "Injected configuration set is empty.");
+            Preconditions.checkArgument(
+                    config != null, "Injected GuiceLiquibaseConfig cannot be null.");
+            Preconditions.checkArgument(
+                    !config.getConfigs().isEmpty(), "Injected configuration set is empty.");
             this.config = config;
         }
 
@@ -74,7 +78,8 @@ public final class GuiceLiquibaseModule extends PrivateModule {
                     return;
                 }
                 if (shouldExecuteLiquibaseUpdate()) {
-                    for (GuiceLiquibaseConfig.LiquibaseConfig liquibaseConfig : config.getConfigs()) {
+                    for (GuiceLiquibaseConfig.LiquibaseConfig liquibaseConfig
+                            : config.getConfigs()) {
                         executeLiquibaseUpdate(liquibaseConfig);
                     }
                     updated = true;
@@ -86,33 +91,40 @@ public final class GuiceLiquibaseModule extends PrivateModule {
 
         private boolean shouldExecuteLiquibaseUpdate() {
             LiquibaseConfiguration liquibaseConfiguration = LiquibaseConfiguration.getInstance();
-            boolean shouldRun = liquibaseConfiguration.getConfiguration(GlobalConfiguration.class).getShouldRun();
+            boolean shouldRun = liquibaseConfiguration.getConfiguration(GlobalConfiguration.class)
+                    .getShouldRun();
             if (!shouldRun) {
                 LOGGER.warning("Cannot run Liquibase updates because "
-                        + liquibaseConfiguration.describeValueLookupLogic(GlobalConfiguration.class, GlobalConfiguration.SHOULD_RUN)
+                        + liquibaseConfiguration.describeValueLookupLogic(
+                        GlobalConfiguration.class, GlobalConfiguration.SHOULD_RUN)
                         + " is set to false.");
             }
             return shouldRun;
         }
 
-        private void executeLiquibaseUpdate(GuiceLiquibaseConfig.LiquibaseConfig liquibaseConfig) throws LiquibaseException {
+        private void executeLiquibaseUpdate(GuiceLiquibaseConfig.LiquibaseConfig liquibaseConfig)
+                throws LiquibaseException {
             LOGGER.info("Applying changes for " + liquibaseConfig.toString());
             Database database = null;
             try {
-                Connection connection =
-                        checkNotNull(liquibaseConfig.getDataSource(), "DataSource must be defined.").getConnection();
-                JdbcConnection jdbcConnection = new JdbcConnection(checkNotNull(connection,
-                        "DataSource returns null connection instance."));
-                database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(jdbcConnection);
-                Liquibase liquibase = new Liquibase(liquibaseConfig.getChangeLogPath(), resourceAccessor, database);
+                Connection connection = Preconditions.checkNotNull(
+                        liquibaseConfig.getDataSource(), "DataSource must be defined.")
+                        .getConnection();
+                JdbcConnection jdbcConnection = new JdbcConnection(
+                        Preconditions.checkNotNull(
+                                connection, "DataSource returns null connection instance."));
+                database = DatabaseFactory.getInstance()
+                        .findCorrectDatabaseImplementation(jdbcConnection);
+                Liquibase liquibase = new Liquibase(
+                        liquibaseConfig.getChangeLogPath(), resourceAccessor, database);
                 liquibase.update(new Contexts(Collections.emptyList()),
                         new LabelExpression(Collections.emptyList()));
-            } catch (SQLException e) {
+            } catch (SQLException exception) {
                 LOGGER.severe("Problem while SQL and JDBC calls.");
-                throw new DatabaseException(e);
-            } catch (LiquibaseException e) {
+                throw new DatabaseException(exception);
+            } catch (LiquibaseException exception) {
                 LOGGER.severe("Problem while Liquibase calls.");
-                throw e;
+                throw exception;
             } finally {
                 if (database != null) {
                     database.close();
@@ -121,12 +133,12 @@ public final class GuiceLiquibaseModule extends PrivateModule {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            GuiceLiquibase that = (GuiceLiquibase) o;
-            return Objects.equals(config, that.config) &&
-                    Objects.equals(resourceAccessor, that.resourceAccessor);
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            GuiceLiquibase that = (GuiceLiquibase) obj;
+            return Objects.equals(config, that.config)
+                    && Objects.equals(resourceAccessor, that.resourceAccessor);
         }
 
         @Override
