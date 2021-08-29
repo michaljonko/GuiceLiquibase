@@ -8,6 +8,8 @@ import static pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig.Builder;
 
 import com.google.common.collect.Lists;
 
+import be.joengenduvel.java.verifiers.ToStringVerifier;
+
 import nl.jqno.equalsverifier.EqualsVerifier;
 
 import org.hsqldb.jdbc.JDBCDataSource;
@@ -19,8 +21,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.sql.DataSource;
-
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GuiceLiquibaseConfigTest {

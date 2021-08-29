@@ -23,6 +23,8 @@
       <emptyLine />
       <package name="au" withSubpackages="true" static="false" />
       <emptyLine />
+      <package name="be.joengenduvel" withSubpackages="true" static="false" />
+      <emptyLine />
       <package name="beaver" withSubpackages="true" static="false" />
       <emptyLine />
       <package name="bibtex" withSubpackages="true" static="false" />
