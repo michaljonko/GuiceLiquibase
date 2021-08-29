@@ -1,7 +1,12 @@
 # Changelog
 ---
-
+- #### 0.0.5
+    - updated Guice to 5.0.1
+    - updated Liquibase to 3.10.3
+    - some fixes
+     
 - #### 0.0.3
+
 - #### 0.0.2
     - added CHANGELOG.md
     - moved _LiquibaseConfig_ inner class to separate upper level
@@ -16,5 +21,6 @@
     - added code coverage for _LiquibaseConfig_
     - added ToStringVerifier 1.0.2
     - added @Ignore to _Example_ in test path
+
 - #### 0.0.1
     - Initial version
