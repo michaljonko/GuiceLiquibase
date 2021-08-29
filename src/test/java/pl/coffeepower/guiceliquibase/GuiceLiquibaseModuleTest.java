@@ -1,5 +1,10 @@
 package pl.coffeepower.guiceliquibase;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.CreationException;
 import com.google.inject.Guice;
@@ -26,11 +31,6 @@ import java.sql.ResultSet;
 
 import javax.sql.DataSource;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class GuiceLiquibaseModuleTest {
 
@@ -40,6 +40,7 @@ public class GuiceLiquibaseModuleTest {
   @Mock
   private DataSource dataSource;
 
+  @SuppressWarnings("checkstyle:javadocmethod")
   @BeforeClass
   public static void beforeClass() throws Exception {
     try {
@@ -49,6 +50,7 @@ public class GuiceLiquibaseModuleTest {
     }
   }
 
+  @SuppressWarnings("checkstyle:javadocmethod")
   @Before
   public void setUp() throws Exception {
     try (Connection connection =

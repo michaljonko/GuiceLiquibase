@@ -50,15 +50,32 @@ public final class GuiceLiquibaseConfig {
 
   public static final class LiquibaseConfig {
 
-    public static final String DEFAULT_CHANGE_LOG_PATH = "liquibase/changeLog.xml";
+    static final String DEFAULT_CHANGE_LOG_PATH = "liquibase/changeLog.xml";
     private final DataSource dataSource;
     private final String changeLogPath;
     private final int hash;
 
+    /**
+     * Creates new <code>LiquibaseConfig</code> for passed DataSource and default changelog file
+     * location.
+     *
+     * @param dataSource DataSource where LiquiBase will be running
+     * @throws NullPointerException when <code>dataSource</code> is null
+     * @see #DEFAULT_CHANGE_LOG_PATH
+     */
     public LiquibaseConfig(DataSource dataSource) {
       this(dataSource, DEFAULT_CHANGE_LOG_PATH);
     }
 
+    /**
+     * Creates new <code>LiquiBaseConfig</code> for passed DataSource and changelog file location.
+     *
+     * @param dataSource    DataSource where LiquiBase will be running
+     * @param changeLogPath LiquiBase changelog with all changesets
+     * @throws NullPointerException     when <code>dataSource</code> is null
+     * @throws IllegalArgumentException when <code>changeLogPath</code> is null or empty
+     * @link http://www.liquibase.org/documentation/databasechangelog.html
+     */
     public LiquibaseConfig(DataSource dataSource, String changeLogPath) {
       this.dataSource = Preconditions.checkNotNull(dataSource, "dataSource must be defined.");
       Preconditions.checkArgument(
@@ -101,6 +118,9 @@ public final class GuiceLiquibaseConfig {
     }
   }
 
+  /**
+   * Builder for <code>GuiceLiquibaseConfig</code>.
+   */
   public static final class Builder {
 
     private final Set<LiquibaseConfig> configs = new HashSet<>();
@@ -108,22 +128,42 @@ public final class GuiceLiquibaseConfig {
     private Builder() {
     }
 
+    /**
+     * Creates new builder for <code>GuiceLiquibaseConfig</code>.
+     *
+     * @return new Builder instance
+     */
     public static Builder createConfigSet() {
       return new Builder();
     }
 
+    /**
+     * Adds <code>LiquibaseConfig</code> instance to the set of configuration.
+     *
+     * @param config <code>LiquibaseConfig</code> object
+     */
     public Builder withLiquibaseConfig(LiquibaseConfig config) {
       Preconditions.checkNotNull(config);
       configs.add(config);
       return this;
     }
 
+    /**
+     * Adds <code>LiquibaseConfig</code> instances to the set of configuration.
+     *
+     * @param configs <code>LiquibaseConfig</code> object
+     */
     public Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
       Preconditions.checkNotNull(configs);
       this.configs.addAll(configs);
       return this;
     }
 
+    /**
+     * Creates new <code>GuiceLiquibaseConfig</code> object.
+     *
+     * @return new <code>GuiceLiquibaseConfig</code> object
+     */
     public GuiceLiquibaseConfig build() {
       return new GuiceLiquibaseConfig(configs);
     }
