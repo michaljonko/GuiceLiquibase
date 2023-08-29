@@ -179,9 +179,11 @@ public class GuiceLiquibaseModuleTest {
   public void shouldThrowExceptionForNotDefinedRequiredBinding() {
     expectedException.expect(CreationException.class);
     expectedException.expectMessage(containsString("Unable to create injector"));
-    expectedException.expectMessage(containsString("No implementation for GuiceLiquibaseConfig annotated with @GuiceLiquibaseConfiguration() was bound"));
+    expectedException.expectMessage(containsString("No implementation for"
+            + " GuiceLiquibaseConfig annotated with"
+            + " @GuiceLiquibaseConfiguration() was bound"));
 
-	Guice.createInjector(new GuiceLiquibaseModule());
+    Guice.createInjector(new GuiceLiquibaseModule());
   }
 
   @Test
@@ -293,21 +295,15 @@ public class GuiceLiquibaseModuleTest {
     doThrow(new DatabaseException("Problem - Liquibase.")).when(database).rollback();
     DatabaseFactory.setInstance(databaseFactory);
 
-    Guice.createInjector(
-	  new GuiceLiquibaseModule(),
-	  new AbstractModule() {
-
-		@Override
-		protected void configure() {
-		  bind(GuiceLiquibaseConfig.class)
-			  .annotatedWith(GuiceLiquibaseConfiguration.class)
-			  .toInstance(GuiceLiquibaseConfig.Builder
-				  .of(LiquibaseConfig.Builder
-					  .of(dataSource)
-					  .build())
-				  .build());
-		}
-	  });
+    Guice.createInjector(new GuiceLiquibaseModule(), new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(GuiceLiquibaseConfig.class).annotatedWith(GuiceLiquibaseConfiguration.class)
+            .toInstance(GuiceLiquibaseConfig.Builder
+                    .of(LiquibaseConfig.Builder.of(dataSource).build())
+                      .build());
+      }
+    });
 
     verify(dataSource).getConnection();
     verify(connection).rollback();

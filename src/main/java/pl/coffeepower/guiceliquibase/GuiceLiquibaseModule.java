@@ -142,18 +142,18 @@ public final class GuiceLiquibaseModule extends AbstractModule {
         LOGGER.error("Problem during Liquibase calls.", exception);
         throw new UnexpectedLiquibaseException(exception);
       } finally {
-      	if(nonNull(liquibase)) {
-      	  try {
-		    liquibase.close();
-		  } catch (Exception exception) {
-		    LOGGER.error("Problem during liquibase.close() call.", exception);
-      	  }
-		}
+        if (nonNull(liquibase)) {
+          try {
+            liquibase.close();
+          } catch (Exception exception) {
+            LOGGER.error("Problem during liquibase.close() call.", exception);
+          }
+        }
         if (nonNull(database) && nonNull(database.getConnection())) {
           try {
-          	if(!database.getConnection().isClosed()) {
-          	  database.close();
-			}
+            if (!database.getConnection().isClosed()) {
+              database.close();
+            }
           } catch (DatabaseException exception) {
             LOGGER.error("Problem during database.close() call.", exception);
           }
