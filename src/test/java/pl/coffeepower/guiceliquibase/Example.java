@@ -9,25 +9,20 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
-
-import liquibase.resource.ClassLoaderResourceAccessor;
-
-import org.hsqldb.jdbc.JDBCDataSource;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Set;
 import java.util.UUID;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
 @Ignore
 public class Example {

@@ -11,26 +11,20 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 
+import be.joengenduvel.java.verifiers.ToStringVerifier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-
-import be.joengenduvel.java.verifiers.ToStringVerifier;
-
+import java.util.Collection;
+import java.util.Map;
+import javax.sql.DataSource;
 import liquibase.resource.ResourceAccessor;
 import liquibase.sdk.resource.MockResourceAccessor;
-
 import nl.jqno.equalsverifier.EqualsVerifier;
-
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.hsqldb.jdbc.JDBCPool;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.util.Collection;
-import java.util.Map;
-
-import javax.sql.DataSource;
 
 public class LiquibaseConfigTest {
 

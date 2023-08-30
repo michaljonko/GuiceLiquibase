@@ -7,7 +7,12 @@ import static java.util.Objects.nonNull;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
-
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.inject.Inject;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -21,19 +26,10 @@ import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.util.LiquibaseUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Objects;
-import java.util.StringJoiner;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.inject.Inject;
 
 public final class GuiceLiquibaseModule extends AbstractModule {
 

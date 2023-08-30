@@ -8,10 +8,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
-import liquibase.resource.ClassLoaderResourceAccessor;
-import liquibase.resource.ResourceAccessor;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,8 +15,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
-
 import javax.sql.DataSource;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.resource.ResourceAccessor;
 
 public final class LiquibaseConfig {
 
@@ -67,32 +64,32 @@ public final class LiquibaseConfig {
     this.parameters = ImmutableMap.copyOf(checkNotNull(parameters));
   }
 
-  public final DataSource getDataSource() {
+  DataSource getDataSource() {
     return dataSource;
   }
 
-  public final String getChangeLogPath() {
+  public String getChangeLogPath() {
     return changeLogPath;
   }
 
-  public final ResourceAccessor getResourceAccessor() {
+  public ResourceAccessor getResourceAccessor() {
     return resourceAccessor;
   }
 
-  public final boolean isDropFirst() {
+  public boolean isDropFirst() {
     return dropFirst;
   }
 
-  public final Set<String> getContexts() {
-    return contexts;
+  public Set<String> getContexts() {
+    return new HashSet<>(contexts);
   }
 
-  public final Set<String> getLabels() {
-    return labels;
+  public Set<String> getLabels() {
+    return new HashSet<>(labels);
   }
 
   public Map<String, String> getParameters() {
-    return parameters;
+    return new HashMap<>(parameters);
   }
 
   @Override

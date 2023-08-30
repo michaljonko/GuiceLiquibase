@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import be.joengenduvel.java.verifiers.ToStringVerifier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
@@ -25,9 +26,13 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Stage;
-
-import be.joengenduvel.java.verifiers.ToStringVerifier;
-
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.UUID;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
 import liquibase.configuration.GlobalConfiguration;
 import liquibase.configuration.LiquibaseConfiguration;
 import liquibase.database.Database;
@@ -35,9 +40,7 @@ import liquibase.database.DatabaseFactory;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
-
 import nl.jqno.equalsverifier.EqualsVerifier;
-
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.After;
 import org.junit.Before;
@@ -45,17 +48,8 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
 import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.UUID;
-
-import javax.inject.Singleton;
-import javax.sql.DataSource;
 
 public class GuiceLiquibaseModuleTest {
 
@@ -247,7 +241,7 @@ public class GuiceLiquibaseModuleTest {
         });
   }
 
-  @edu.umd.cs.findbugs.annotations.SuppressWarnings("ODR_OPEN_DATABASE_RESOURCE")
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("ODR_OPEN_DATABASE_RESOURCE")
   @Test
   public void shouldThrowExceptionWhenProblemOccurredDuringDatabaseCreation() throws Exception {
     expectedException.expect(CreationException.class);
@@ -281,7 +275,7 @@ public class GuiceLiquibaseModuleTest {
     verifyNoMoreInteractions(connection, dataSource);
   }
 
-  @edu.umd.cs.findbugs.annotations.SuppressWarnings("ODR_OPEN_DATABASE_RESOURCE")
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("ODR_OPEN_DATABASE_RESOURCE")
   @Test
   public void shouldThrowExceptionWhenProblemOccurredDuringLiquibaseUpdate() throws Exception {
     expectedException.expect(CreationException.class);
@@ -353,6 +347,7 @@ public class GuiceLiquibaseModuleTest {
         .containsClassName(liquibaseEngine);
   }
 
+  @SuppressWarnings("unchecked")
   private Class<GuiceLiquibaseModule.LiquibaseEngine> getGuiceLiquibaseEngineClass() {
     try {
       return (Class<GuiceLiquibaseModule.LiquibaseEngine>)

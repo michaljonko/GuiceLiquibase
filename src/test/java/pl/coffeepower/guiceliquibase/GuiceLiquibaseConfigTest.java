@@ -9,20 +9,16 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig.Builder;
 
-import com.google.common.collect.Lists;
-
 import be.joengenduvel.java.verifiers.ToStringVerifier;
-
+import com.google.common.collect.Lists;
+import java.util.List;
+import javax.sql.DataSource;
 import nl.jqno.equalsverifier.EqualsVerifier;
-
+import org.hamcrest.Matchers;
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.util.List;
-
-import javax.sql.DataSource;
 
 public class GuiceLiquibaseConfigTest {
 
