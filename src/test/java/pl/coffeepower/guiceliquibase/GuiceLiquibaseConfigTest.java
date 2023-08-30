@@ -9,8 +9,9 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig.Builder;
 
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 import com.google.common.collect.Lists;
+import com.jparams.verifier.tostring.NameStyle;
+import com.jparams.verifier.tostring.ToStringVerifier;
 import java.util.List;
 import javax.sql.DataSource;
 import nl.jqno.equalsverifier.EqualsVerifier;
@@ -117,6 +118,6 @@ public class GuiceLiquibaseConfigTest {
   @Test
   public void verifyToString() throws Exception {
     ToStringVerifier.forClass(GuiceLiquibaseConfig.class)
-        .containsClassName(Builder.of().build());
+            .withClassName(NameStyle.SIMPLE_NAME).verify();
   }
 }

@@ -11,9 +11,10 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.jparams.verifier.tostring.NameStyle;
+import com.jparams.verifier.tostring.ToStringVerifier;
 import java.util.Collection;
 import java.util.Map;
 import javax.sql.DataSource;
@@ -140,9 +141,8 @@ public class LiquibaseConfigTest {
 
   @Test
   public void verifyToString() throws Exception {
-    ToStringVerifier.forClass(LiquibaseConfig.class)
-        .ignore("dataSource", "resourceAccessor")
-        .containsClassName(Builder.of(Fixtures.DATA_SOURCE).build());
+    ToStringVerifier.forClass(LiquibaseConfig.class).withClassName(NameStyle.SIMPLE_NAME)
+        .withIgnoredFields("dataSource", "resourceAccessor").verify();
   }
 
   private static final class Fixtures {

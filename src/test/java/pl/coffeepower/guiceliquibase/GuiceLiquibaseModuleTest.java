@@ -14,7 +14,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import be.joengenduvel.java.verifiers.ToStringVerifier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
@@ -25,6 +24,8 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Stage;
+import com.jparams.verifier.tostring.NameStyle;
+import com.jparams.verifier.tostring.ToStringVerifier;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -325,25 +326,8 @@ public class GuiceLiquibaseModuleTest {
 
   @Test
   public void verifyToStringInGuiceLiquibaseEngine() {
-    GuiceLiquibaseModule.LiquibaseEngine liquibaseEngine = Guice.createInjector(
-        new AbstractModule() {
-
-          @Override
-          protected void configure() {
-            bind(Key.get(GuiceLiquibaseConfig.class, GuiceLiquibaseConfiguration.class))
-                .toInstance(GuiceLiquibaseConfig.Builder.of(
-                    LiquibaseConfig.Builder.of(Fixtures.SINGLE_DATA_SOURCE)
-                        .build())
-                    .build());
-            bind(GuiceLiquibaseModule.LiquibaseEngine.class)
-                .to(getGuiceLiquibaseEngineClass());
-          }
-        })
-        .getInstance(GuiceLiquibaseModule.LiquibaseEngine.class);
-
-    ToStringVerifier.forClass(getGuiceLiquibaseEngineClass())
-        .ignore("dataSource", "resourceAccessor")
-        .containsClassName(liquibaseEngine);
+    ToStringVerifier.forClass(getGuiceLiquibaseEngineClass()).withClassName(NameStyle.SIMPLE_NAME)
+        .withIgnoredFields("dataSource", "resourceAccessor").verify();
   }
 
   @SuppressWarnings("unchecked")
