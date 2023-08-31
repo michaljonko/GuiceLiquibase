@@ -1,11 +1,12 @@
 package pl.coffeepower.guiceliquibase;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig.Builder;
 
@@ -15,16 +16,11 @@ import com.jparams.verifier.tostring.ToStringVerifier;
 import java.util.List;
 import javax.sql.DataSource;
 import nl.jqno.equalsverifier.EqualsVerifier;
-import org.hamcrest.Matchers;
 import org.hsqldb.jdbc.JDBCDataSource;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 public class GuiceLiquibaseConfigTest {
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void shouldCreateEmptyConfigs() throws Exception {
@@ -60,45 +56,47 @@ public class GuiceLiquibaseConfigTest {
     assertThat(config, notNullValue());
     assertThat(config.getConfigs(), hasSize(2));
     assertThat(config.getConfigs(),
-        containsInAnyOrder(firstLiquibaseConfig, secondLiquibaseConfig));
+            containsInAnyOrder(firstLiquibaseConfig, secondLiquibaseConfig));
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedConfig() throws Exception {
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage(containsString("config must be defined."));
+  public void shouldThrowExceptionForNotDefinedConfig() {
+    NullPointerException e = assertThrows(NullPointerException.class, () -> Builder.of(null));
 
-    Builder.of(null);
+    assertThat(e, notNullValue());
+    assertThat(e.getMessage(), containsString("config must be defined."));
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedConfigAddedToBuilder() throws Exception {
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage(containsString("config must be defined."));
+  public void shouldThrowExceptionForNotDefinedConfigAddedToBuilder() {
+    NullPointerException e = assertThrows(NullPointerException.class, () -> Builder.of()
+            .withLiquibaseConfig(null));
 
-    Builder.of()
-        .withLiquibaseConfig(null);
+    assertThat(e, notNullValue());
+    assertThat(e.getMessage(), containsString("config must be defined."));
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedConfigsAddedToBuilder() throws Exception {
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage(containsString("configs must be defined."));
+  public void shouldThrowExceptionForNotDefinedConfigsAddedToBuilder() {
+    NullPointerException e = assertThrows(NullPointerException.class, () -> Builder.of()
+            .withLiquibaseConfigs(null));
 
-    Builder.of()
-        .withLiquibaseConfigs(null);
+    assertThat(e, notNullValue());
+    assertThat(e.getMessage(), containsString("configs must be defined."));
   }
 
   @Test
-  public void shouldThrowExceptionForConfigsWithNotDefinedElement() throws Exception {
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage(containsString("config must be defined."));
+  public void shouldThrowExceptionForConfigsWithNotDefinedElement() {
+    NullPointerException e = assertThrows(NullPointerException.class, () -> {
+      List<LiquibaseConfig> configs = Lists.newArrayList(
+            LiquibaseConfig.Builder.of(new JDBCDataSource()).build(),
+            null);
+      Builder.of()
+            .withLiquibaseConfigs(configs);
+    });
 
-    List<LiquibaseConfig> configs = Lists.newArrayList(
-        LiquibaseConfig.Builder.of(new JDBCDataSource()).build(),
-        null);
-    Builder.of()
-        .withLiquibaseConfigs(configs);
+    assertThat(e, notNullValue());
+    assertThat(e.getMessage(), containsString("config must be defined."));
   }
 
   @Test

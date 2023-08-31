@@ -1,13 +1,14 @@
 package pl.coffeepower.guiceliquibase;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 
@@ -15,6 +16,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collection;
 import java.util.Map;
 import javax.sql.DataSource;
@@ -23,14 +25,10 @@ import liquibase.sdk.resource.MockResourceAccessor;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.hsqldb.jdbc.JDBCPool;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class LiquibaseConfigTest {
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void shouldCreateConfigByBuilder() throws Exception {
@@ -79,33 +77,36 @@ public class LiquibaseConfigTest {
   }
 
   @Test
-  public void shouldThrowExceptionForBuilderWithEmptyChangeLogPath() throws Exception {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(containsString("changeLogPath must be defined."));
+  public void shouldThrowExceptionForBuilderWithEmptyChangeLogPath() {
+    IllegalArgumentException e = Assertions.assertThrows(IllegalArgumentException.class,
+            () -> Builder.of(Fixtures.DATA_SOURCE)
+            .withChangeLogPath("")
+            .build());
 
-    Builder.of(Fixtures.DATA_SOURCE)
-        .withChangeLogPath("")
-        .build();
+    assertThat(e, notNullValue());
+    assertThat(e.getMessage(), containsString("changeLogPath must be defined."));
   }
 
   @Test
-  public void shouldThrowExceptionForBuilderWithNotDefinedChangeLogPath() throws Exception {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(containsString("changeLogPath must be defined."));
+  public void shouldThrowExceptionForBuilderWithNotDefinedChangeLogPath() {
 
-    Builder.of(Fixtures.DATA_SOURCE)
-        .withChangeLogPath(null)
-        .build();
+    IllegalArgumentException e = Assertions.assertThrows(IllegalArgumentException.class,
+            () -> Builder.of(Fixtures.DATA_SOURCE)
+                    .withChangeLogPath(null)
+                    .build());
+
+    assertThat(e, notNullValue());
+    assertThat(e.getMessage(), containsString("changeLogPath must be defined."));
   }
 
   @Test
-  public void shouldThrowExceptionForBuilderWithNotDefinedResourceAccessor() throws Exception {
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage(containsString("resourceAccessor must be defined."));
-
-    Builder.of(Fixtures.DATA_SOURCE)
-        .withResourceAccessor(null)
-        .build();
+  public void shouldThrowExceptionForBuilderWithNotDefinedResourceAccessor() {
+    NullPointerException e = Assertions.assertThrows(NullPointerException.class,
+            () -> Builder.of(Fixtures.DATA_SOURCE)
+            .withResourceAccessor(null)
+            .build());
+    assertThat(e, notNullValue());
+    assertThat(e.getMessage(), containsString("resourceAccessor must be defined."));
   }
 
   @Test
@@ -115,6 +116,7 @@ public class LiquibaseConfigTest {
         .verify();
   }
 
+  @SuppressFBWarnings("EC_NULL_ARG")
   @Test
   public void shouldPassEqualsAndHashCodeContractsForBuilder() throws Exception {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE);

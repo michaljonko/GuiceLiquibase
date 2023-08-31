@@ -1,8 +1,9 @@
 package pl.coffeepower.guiceliquibase;
 
+
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
 
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
@@ -19,16 +20,16 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.hsqldb.jdbc.JDBCDataSource;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
-@Ignore
+@Disabled
 public class Example {
 
   @SuppressWarnings("checkstyle:javadocmethod")
-  @BeforeClass
+  @BeforeAll
   public static void beforeClass() throws Exception {
     try {
       Class.forName("org.hsqldb.jdbc.JDBCDriver");
@@ -44,8 +45,8 @@ public class Example {
 
     Set<String> createdTables = getTablesFromDataSource(injector.getInstance(DataSource.class));
     assertThat(createdTables, hasSize(3));
-    assertThat(createdTables,
-        containsInAnyOrder("DATABASECHANGELOG", "DATABASECHANGELOGLOCK", "EXAMPLE_TABLE"));
+    assertThat(createdTables, containsInAnyOrder("DATABASECHANGELOG", "DATABASECHANGELOGLOCK",
+            "EXAMPLE_TABLE"));
   }
 
   private Set<String> getTablesFromDataSource(DataSource dataSource) throws SQLException {

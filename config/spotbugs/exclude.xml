@@ -11,7 +11,10 @@
     -->
     <Match>
         <Class name="pl.coffeepower.guiceliquibase.GuiceLiquibaseModuleTest" />
-        <Method name="~.*lambda\$shouldNotExecuteUpdateSecondTime.*" />
+        <Or>
+            <Method name="~.*lambda\$shouldNotExecuteUpdateSecondTime.*" />
+            <Method name="~.*lambda\$shouldThrowExceptionWhenProblemOccurredDuring.*" />
+        </Or>
         <Bug pattern="ODR_OPEN_DATABASE_RESOURCE" />
     </Match>
 </FindBugsFilter>
