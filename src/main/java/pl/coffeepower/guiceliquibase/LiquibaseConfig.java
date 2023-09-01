@@ -25,6 +25,7 @@ public final class LiquibaseConfig {
   private final String changeLogPath;
   private final ResourceAccessor resourceAccessor;
   private final boolean dropFirst;
+  private final boolean shouldRun;
   private final Set<String> contexts;
   private final Set<String> labels;
   private final Map<String, String> parameters;
@@ -39,6 +40,7 @@ public final class LiquibaseConfig {
    * @param changeLogPath    Liquibase changelog with all changesets
    * @param resourceAccessor Liquibase {@link ResourceAccessor} used for changelog file loading
    * @param dropFirst        Liquibase switch to drop all schemes and data in database
+   * @param shouldRun        Liquibase switch to disable liquibase run
    * @param contexts         Liquibase contexts which will be used for changelog
    * @param labels           Liquibase labels
    * @param parameters       Liquibase parameters
@@ -50,7 +52,7 @@ public final class LiquibaseConfig {
                           String changeLogPath,
                           ResourceAccessor resourceAccessor,
                           boolean dropFirst,
-                          Collection<String> contexts,
+                          boolean shouldRun, Collection<String> contexts,
                           Collection<String> labels,
                           Map<String, String> parameters) {
     this.dataSource = checkNotNull(dataSource, "dataSource must be defined.");
@@ -59,6 +61,7 @@ public final class LiquibaseConfig {
     this.changeLogPath =
         checkNotNull(changeLogPath, "changeLogPath must be defined.");
     this.dropFirst = dropFirst;
+    this.shouldRun = shouldRun;
     this.contexts = ImmutableSet.copyOf(checkNotNull(contexts));
     this.labels = ImmutableSet.copyOf(checkNotNull(labels));
     this.parameters = ImmutableMap.copyOf(checkNotNull(parameters));
@@ -78,6 +81,10 @@ public final class LiquibaseConfig {
 
   public boolean isDropFirst() {
     return dropFirst;
+  }
+
+  public boolean isShouldRun() {
+    return shouldRun;
   }
 
   public Set<String> getContexts() {
@@ -104,7 +111,7 @@ public final class LiquibaseConfig {
     return Objects.equals(dataSource, that.dataSource)
         && Objects.equals(changeLogPath, that.changeLogPath)
         && Objects.equals(resourceAccessor, that.resourceAccessor)
-        && (dropFirst == that.dropFirst)
+        && (dropFirst == that.dropFirst) && (shouldRun == that.shouldRun)
         && Objects.equals(contexts, that.contexts)
         && Objects.equals(labels, that.labels)
         && Objects.equals(parameters, that.parameters);
@@ -113,7 +120,7 @@ public final class LiquibaseConfig {
   @Override
   public int hashCode() {
     return Objects.hash(this.dataSource, this.changeLogPath, this.resourceAccessor, this.dropFirst,
-        this.contexts, this.labels, this.parameters);
+            this.shouldRun, this.contexts, this.labels, this.parameters);
   }
 
   @Override
@@ -121,6 +128,7 @@ public final class LiquibaseConfig {
     return new StringJoiner(", ", LiquibaseConfig.class.getSimpleName() + "[", "]")
         .add("changeLogPath='" + changeLogPath + "'")
         .add("dropFirst=" + dropFirst)
+        .add("shouldRun=" + shouldRun)
         .add("contexts=" + contexts)
         .add("labels=" + labels)
         .add("parameters=" + parameters)
@@ -139,6 +147,7 @@ public final class LiquibaseConfig {
     private String changeLogPath;
     private ResourceAccessor resourceAccessor;
     private boolean dropFirst;
+    private boolean shouldRun;
     private Set<String> contexts;
     private Set<String> labels;
     private Map<String, String> parameters;
@@ -148,6 +157,7 @@ public final class LiquibaseConfig {
       this.changeLogPath = DEFAULT_CHANGE_LOG_PATH;
       this.resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader());
       this.dropFirst = false;
+      this.shouldRun = true;
       this.contexts = new HashSet<>();
       this.labels = new HashSet<>();
       this.parameters = new HashMap<>();
@@ -176,6 +186,7 @@ public final class LiquibaseConfig {
       Builder copy = of(checkNotNull(builder, "builder cannot be null.").dataSource)
           .withChangeLogPath(builder.changeLogPath)
           .withDropFirst(builder.dropFirst)
+          .withShouldRun(builder.shouldRun)
           .withResourceAccessor(builder.resourceAccessor);
       builder.contexts.forEach(copy::withContext);
       builder.labels.forEach(copy::withLabel);
@@ -213,6 +224,17 @@ public final class LiquibaseConfig {
      */
     public final Builder withDropFirst(boolean value) {
       this.dropFirst = value;
+      return this;
+    }
+
+    /**
+     * Default value to true, set to it to false to disable liquibase execution.
+     *
+     * @param value true/false flag
+     * @return itself
+     */
+    public Builder withShouldRun(boolean value) {
+      this.shouldRun = value;
       return this;
     }
 
@@ -321,7 +343,7 @@ public final class LiquibaseConfig {
           this.changeLogPath,
           this.resourceAccessor,
           this.dropFirst,
-          this.contexts,
+          this.shouldRun, this.contexts,
           this.labels,
           this.parameters);
     }
@@ -335,7 +357,7 @@ public final class LiquibaseConfig {
         return false;
       }
       Builder builder = (Builder) obj;
-      return dropFirst == builder.dropFirst
+      return dropFirst == builder.dropFirst && shouldRun == builder.shouldRun
           && Objects.equals(dataSource, builder.dataSource)
           && Objects.equals(changeLogPath, builder.changeLogPath)
           && Objects.equals(resourceAccessor, builder.resourceAccessor)

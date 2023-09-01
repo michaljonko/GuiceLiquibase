@@ -16,8 +16,6 @@ import javax.inject.Inject;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
-import liquibase.configuration.GlobalConfiguration;
-import liquibase.configuration.LiquibaseConfiguration;
 import liquibase.database.Database;
 import liquibase.database.DatabaseConnection;
 import liquibase.database.DatabaseFactory;
@@ -25,6 +23,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
+import liquibase.integration.commandline.LiquibaseCommandLineConfiguration;
 import liquibase.util.LiquibaseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,8 +78,8 @@ public final class GuiceLiquibaseModule extends AbstractModule {
         try {
           if (updated.get()) {
             LOGGER.warn("Liquibase update has been already executed.");
-          } else if (shouldExecuteLiquibaseUpdate()) {
-            config.getConfigs().forEach(this::executeLiquibaseUpdate);
+          } else if (LiquibaseCommandLineConfiguration.SHOULD_RUN.getCurrentValue()) {
+            config.getConfigs().forEach(this::executeLiquibaseUpdateIfEnabled);
           }
         } finally {
           updated.getAndSet(true);
@@ -91,21 +90,13 @@ public final class GuiceLiquibaseModule extends AbstractModule {
       }
     }
 
-    private boolean shouldExecuteLiquibaseUpdate() {
-      LiquibaseConfiguration liquibaseConfiguration = LiquibaseConfiguration.getInstance();
-      boolean shouldRun = liquibaseConfiguration
-          .getConfiguration(GlobalConfiguration.class)
-          .getShouldRun();
-      if (!shouldRun) {
-        LOGGER.warn("Cannot run Liquibase updates because {} is set to false.",
-            liquibaseConfiguration
-                .describeValueLookupLogic(GlobalConfiguration.class, GlobalConfiguration.SHOULD_RUN)
-        );
+    private void executeLiquibaseUpdateIfEnabled(LiquibaseConfig config) {
+      if (!config.isShouldRun()) {
+        LOGGER.info(String.format("Liquibase did not run on config with changeLogPath %s because"
+                        + " LiquibaseConfig.shouldRun was set to false.",
+                config.getChangeLogPath()));
+        return;
       }
-      return shouldRun;
-    }
-
-    private void executeLiquibaseUpdate(LiquibaseConfig config) {
       LOGGER.info("Applying changes for {}", config);
       Connection connection = null;
       Database database = null;

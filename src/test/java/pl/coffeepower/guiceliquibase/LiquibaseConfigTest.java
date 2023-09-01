@@ -35,6 +35,7 @@ public class LiquibaseConfigTest {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE)
         .withChangeLogPath(Fixtures.CHANGELOG_PATH)
         .withDropFirst(Fixtures.DROP_FIRST)
+        .withShouldRun(Fixtures.SHOULD_RUN)
         .withResourceAccessor(Fixtures.RESOURCE_ACCESSOR)
         .withContexts(Fixtures.CONTEXT)
         .withLabels(Fixtures.LABELS)
@@ -61,6 +62,7 @@ public class LiquibaseConfigTest {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE)
         .withChangeLogPath(Fixtures.CHANGELOG_PATH)
         .withDropFirst(Fixtures.DROP_FIRST)
+        .withShouldRun(Fixtures.SHOULD_RUN)
         .withResourceAccessor(Fixtures.RESOURCE_ACCESSOR)
         .withContexts(Fixtures.CONTEXT)
         .withLabels(Fixtures.LABELS)
@@ -152,6 +154,7 @@ public class LiquibaseConfigTest {
     private static final DataSource DATA_SOURCE = new JDBCDataSource();
     private static final String CHANGELOG_PATH = "changelog/path";
     private static final boolean DROP_FIRST = true;
+    private static final boolean SHOULD_RUN = true;
     private static final ResourceAccessor RESOURCE_ACCESSOR = new MockResourceAccessor();
     private static final Collection<String> CONTEXT = Lists.newArrayList("context1", "context2");
     private static final Collection<String> LABELS = Lists.newArrayList("label1", "label2");

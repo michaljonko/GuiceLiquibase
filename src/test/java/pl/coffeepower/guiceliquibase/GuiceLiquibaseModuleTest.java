@@ -119,31 +119,23 @@ public class GuiceLiquibaseModuleTest {
   public void shouldNotExecuteUpdateWhenShouldRunIsDisabled() {
     DataSource dataSource = mock(DataSource.class);
 
-    try {
-      LiquibaseConfiguration.getInstance().getConfiguration(GlobalConfiguration.class)
-          .setShouldRun(false);
+    Guice.createInjector(
+        new GuiceLiquibaseModule(),
+        new AbstractModule() {
 
-      Guice.createInjector(
-          new GuiceLiquibaseModule(),
-          new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(GuiceLiquibaseConfig.class)
+                .annotatedWith(GuiceLiquibaseConfiguration.class)
+                .toInstance(GuiceLiquibaseConfig.Builder
+                    .of(LiquibaseConfig.Builder
+                        .of(dataSource).withShouldRun(false)
+                        .build())
+                    .build());
+          }
+        });
 
-            @Override
-            protected void configure() {
-              bind(GuiceLiquibaseConfig.class)
-                  .annotatedWith(GuiceLiquibaseConfiguration.class)
-                  .toInstance(GuiceLiquibaseConfig.Builder
-                      .of(LiquibaseConfig.Builder
-                          .of(dataSource)
-                          .build())
-                      .build());
-            }
-          });
-
-      verifyNoMoreInteractions(dataSource);
-    } finally {
-      LiquibaseConfiguration.getInstance().getConfiguration(GlobalConfiguration.class)
-          .setShouldRun(true);
-    }
+    verifyNoMoreInteractions(dataSource);
   }
 
   @Test
