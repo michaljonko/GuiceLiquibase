@@ -8,6 +8,7 @@ plugins {
     id("info.solidsoft.pitest") version "1.9.11"
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.github.spotbugs") version "5.1.3"
+    id 'io.github.gradle-nexus.publish-plugin' version '1.3.0'
     id 'maven-publish'
 }
 
@@ -42,6 +43,10 @@ task javadocsJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+signing {
+    sign publishing.publications
+}
+
 publishing {
     publications {
         GuiceLiquibase(MavenPublication) {
@@ -50,6 +55,53 @@ publishing {
             artifactId appName
             version appVersion
             artifacts = [jar, sourcesJar, javadocsJar]
+        }
+    }
+}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId appGroup
+            artifactId appName
+            version appVersion
+            artifacts = [jar, sourcesJar, javadocsJar]
+
+            pom {
+                name = appName
+                description = 'Guice module for Liquibase to execute DB change sets automatically as a CDI extension'
+                url = 'https://github.com/michaljonko/GuiceLiquibase'
+                licenses {
+                    license {
+                        name = 'Apache-2.0'
+                        url = 'https://raw.githubusercontent.com/michaljonko/GuiceLiquibase/master/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'michaljonko'
+                        name = 'Michal Jonko'
+                        email = 'michal.jonko@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:github.com/michaljonko/GuiceLiquibase.git'
+                    developerConnection = 'scm:git:ssh://github.com/michaljonko/GuiceLiquibase.git'
+                    url = 'https://github.com/michaljonko/GuiceLiquibase'
+                }
+            }
+        }
+    }
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            username = project.findProperty('sonatypeUsername') ?: System.getenv("SONATYPE_USER")
+            password = project.findProperty('sonatypePassword') ?: System.getenv("SONATYPE_PASSWORD")
+            stagingProfileId = project.findProperty('sonatypeStagingProfileId') ?: System.getenv("SONATYPE_STAGING_PROFILE_ID")
         }
     }
 }
