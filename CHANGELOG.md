@@ -1,5 +1,18 @@
 # Changelog
 ---
+- #### 0.1.0
+  - Upgrade to Gradle 7.6
+  - Upgrade checkstyle and fix checks
+  - Adding SpotBugs instead of FindBugs
+  - Upgrade Mockito and Hamcrest
+  - Upgrade ThirdParty Libraries
+  - Upgrade to Java 11
+  - Upgrade Checkstyle and Mockito to Java 11 versions
+  - Migrate Libraries to Junit 5
+  - Upgrade Testcases to JUnit 5
+  - Upgrade Liquibase to 4.20.0
+  - Configure gradle publish to Sonatype
+
 - #### 0.0.7
     - updated Liquibase code version
 
