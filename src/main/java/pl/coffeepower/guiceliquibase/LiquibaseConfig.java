@@ -3,14 +3,14 @@ package pl.coffeepower.guiceliquibase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -52,7 +52,8 @@ public final class LiquibaseConfig {
                           String changeLogPath,
                           ResourceAccessor resourceAccessor,
                           boolean dropFirst,
-                          boolean shouldRun, Collection<String> contexts,
+                          boolean shouldRun,
+                          Collection<String> contexts,
                           Collection<String> labels,
                           Map<String, String> parameters) {
     this.dataSource = checkNotNull(dataSource, "dataSource must be defined.");
@@ -75,28 +76,38 @@ public final class LiquibaseConfig {
     return changeLogPath;
   }
 
-  public ResourceAccessor getResourceAccessor() {
+  ResourceAccessor getResourceAccessor() {
     return resourceAccessor;
   }
 
+  public boolean dropFirst() {
+    return dropFirst;
+  }
+
+  @Deprecated
   public boolean isDropFirst() {
     return dropFirst;
   }
 
+  public boolean shouldRun() {
+    return shouldRun;
+  }
+
+  @Deprecated
   public boolean isShouldRun() {
     return shouldRun;
   }
 
   public Set<String> getContexts() {
-    return new HashSet<>(contexts);
+    return contexts;
   }
 
   public Set<String> getLabels() {
-    return new HashSet<>(labels);
+    return labels;
   }
 
   public Map<String, String> getParameters() {
-    return new HashMap<>(parameters);
+    return parameters;
   }
 
   @Override
@@ -111,7 +122,8 @@ public final class LiquibaseConfig {
     return Objects.equals(dataSource, that.dataSource)
         && Objects.equals(changeLogPath, that.changeLogPath)
         && Objects.equals(resourceAccessor, that.resourceAccessor)
-        && (dropFirst == that.dropFirst) && (shouldRun == that.shouldRun)
+        && (dropFirst == that.dropFirst)
+        && (shouldRun == that.shouldRun)
         && Objects.equals(contexts, that.contexts)
         && Objects.equals(labels, that.labels)
         && Objects.equals(parameters, that.parameters);
@@ -144,23 +156,16 @@ public final class LiquibaseConfig {
     private static final Splitter CONTEXT_AND_LABEL_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults();
     private final DataSource dataSource;
-    private String changeLogPath;
-    private ResourceAccessor resourceAccessor;
-    private boolean dropFirst;
-    private boolean shouldRun;
-    private Set<String> contexts;
-    private Set<String> labels;
-    private Map<String, String> parameters;
+    private String changeLogPath = DEFAULT_CHANGE_LOG_PATH;
+    private ResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader());
+    private boolean dropFirst = false;
+    private boolean shouldRun = true;
+    private final Set<String> contexts = Sets.newHashSet();
+    private final Set<String> labels = Sets.newHashSet();
+    private final Map<String, String> parameters = Maps.newHashMap();
 
     private Builder(DataSource dataSource) {
       this.dataSource = dataSource;
-      this.changeLogPath = DEFAULT_CHANGE_LOG_PATH;
-      this.resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader());
-      this.dropFirst = false;
-      this.shouldRun = true;
-      this.contexts = new HashSet<>();
-      this.labels = new HashSet<>();
-      this.parameters = new HashMap<>();
     }
 
     /**
@@ -181,7 +186,6 @@ public final class LiquibaseConfig {
      * @return new Builder instance with all properties from passed one
      * @throws NullPointerException when builder argument is null
      */
-    @VisibleForTesting
     static Builder of(Builder builder) {
       Builder copy = of(checkNotNull(builder, "builder cannot be null.").dataSource)
           .withChangeLogPath(builder.changeLogPath)
@@ -200,7 +204,7 @@ public final class LiquibaseConfig {
      * @param value path as a String to ChangeLog file
      * @return itself
      */
-    public final Builder withChangeLogPath(String value) {
+    public Builder withChangeLogPath(String value) {
       this.changeLogPath = value;
       return this;
     }
@@ -211,7 +215,7 @@ public final class LiquibaseConfig {
      * @param value <code>ResourceAccessor</code> instance
      * @return itself
      */
-    public final Builder withResourceAccessor(ResourceAccessor value) {
+    public Builder withResourceAccessor(ResourceAccessor value) {
       this.resourceAccessor = value;
       return this;
     }
@@ -222,7 +226,7 @@ public final class LiquibaseConfig {
      * @param value true/false flag
      * @return itself
      */
-    public final Builder withDropFirst(boolean value) {
+    public Builder withDropFirst(boolean value) {
       this.dropFirst = value;
       return this;
     }
@@ -247,7 +251,7 @@ public final class LiquibaseConfig {
      * @param value context
      * @return itself
      */
-    public final Builder withContext(String value) {
+    public Builder withContext(String value) {
       this.contexts.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(Strings.nullToEmpty(value)));
       return this;
     }
@@ -261,7 +265,7 @@ public final class LiquibaseConfig {
      * @throws NullPointerException when passed argument is null
      * @see LiquibaseConfig.Builder#withContext(String)
      */
-    public final Builder withContexts(Collection<String> value) {
+    public Builder withContexts(Collection<String> value) {
       checkNotNull(value, "contexts must be defined.")
           .forEach(this::withContext);
       return this;
@@ -269,14 +273,14 @@ public final class LiquibaseConfig {
 
     /**
      * Adds label which will be used in Liquibase changeSets execution. It will create a set of
-     * labels and pass it to Liquibase. Label can contains a set of labels in format like 'lab1,
+     * labels and pass it to Liquibase. Label can contain a set of labels in format like 'lab1,
      * lab2, lab3'. It will be split and added to the set. Null string will be converted to empty
      * one.
      *
      * @param value label
      * @return itself
      */
-    public final Builder withLabel(String value) {
+    public Builder withLabel(String value) {
       this.labels.addAll(CONTEXT_AND_LABEL_SPLITTER.splitToList(Strings.nullToEmpty(value)));
       return this;
     }
@@ -290,7 +294,7 @@ public final class LiquibaseConfig {
      * @throws NullPointerException when passed argument is null
      * @see LiquibaseConfig.Builder#withLabel(String)
      */
-    public final Builder withLabels(Collection<String> value) {
+    public Builder withLabels(Collection<String> value) {
       checkNotNull(value, "labels must be defined.")
           .forEach(this::withLabel);
       return this;
@@ -305,7 +309,7 @@ public final class LiquibaseConfig {
      * @param value value of the parameter
      * @return itself
      */
-    public final Builder withParameter(String key, String value) {
+    public Builder withParameter(String key, String value) {
       if (!Strings.isNullOrEmpty(key)) {
         parameters.put(key, value);
       }
@@ -321,7 +325,7 @@ public final class LiquibaseConfig {
      * @throws NullPointerException when passed map is null
      * @see LiquibaseConfig.Builder#withParameter(String, String)
      */
-    public final Builder withParameters(Map<String, String> map) {
+    public Builder withParameters(Map<String, String> map) {
       checkNotNull(map, "parameters must be defined.")
           .forEach(this::withParameter);
       return this;
@@ -334,7 +338,7 @@ public final class LiquibaseConfig {
      * @throws IllegalArgumentException when changeLogPath is null or empty
      * @throws NullPointerException     when resourceAccessor is null
      */
-    public final LiquibaseConfig build() {
+    public LiquibaseConfig build() {
       checkArgument(
           !Strings.isNullOrEmpty(this.changeLogPath), "changeLogPath must be defined.");
       checkNotNull(this.resourceAccessor, "resourceAccessor must be defined.");
@@ -343,7 +347,8 @@ public final class LiquibaseConfig {
           this.changeLogPath,
           this.resourceAccessor,
           this.dropFirst,
-          this.shouldRun, this.contexts,
+          this.shouldRun,
+          this.contexts,
           this.labels,
           this.parameters);
     }
@@ -357,7 +362,8 @@ public final class LiquibaseConfig {
         return false;
       }
       Builder builder = (Builder) obj;
-      return dropFirst == builder.dropFirst && shouldRun == builder.shouldRun
+      return dropFirst == builder.dropFirst
+          && shouldRun == builder.shouldRun
           && Objects.equals(dataSource, builder.dataSource)
           && Objects.equals(changeLogPath, builder.changeLogPath)
           && Objects.equals(resourceAccessor, builder.resourceAccessor)

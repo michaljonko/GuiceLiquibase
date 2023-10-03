@@ -1,121 +1,117 @@
 package pl.coffeepower.guiceliquibase;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig.Builder;
 
 import com.google.common.collect.Lists;
+
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
-import java.util.List;
-import javax.sql.DataSource;
+
 import nl.jqno.equalsverifier.EqualsVerifier;
+
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.jupiter.api.Test;
 
-public class GuiceLiquibaseConfigTest {
+import java.util.List;
 
+import javax.sql.DataSource;
+
+class GuiceLiquibaseConfigTest {
 
   @Test
-  public void shouldCreateEmptyConfigs() throws Exception {
+  void shouldCreateEmptyConfigs() {
     GuiceLiquibaseConfig config = Builder.of()
         .build();
 
-    assertThat(config, notNullValue());
-    assertThat(config.getConfigs(), empty());
+    assertThat(config)
+        .isNotNull();
+    assertThat(config.getConfigs())
+        .isEmpty();
   }
 
   @Test
-  public void shouldCreateConfigForSingleLiquibaseConfig() throws Exception {
-    LiquibaseConfig liquibaseConfig = LiquibaseConfig.Builder.of(mock(DataSource.class))
+  void shouldCreateConfigForSingleLiquibaseConfig() {
+    final LiquibaseConfig liquibaseConfig = LiquibaseConfig.Builder.of(mock(DataSource.class))
         .build();
+
     GuiceLiquibaseConfig config = Builder.of(liquibaseConfig)
         .build();
 
-    assertThat(config, notNullValue());
-    assertThat(config.getConfigs(), containsInAnyOrder(liquibaseConfig));
+    assertThat(config)
+        .isNotNull();
+    assertThat(config.getConfigs())
+        .singleElement()
+        .isEqualTo(liquibaseConfig);
   }
 
   @Test
-  public void shouldCreateConfigForMultipleLiquibaseConfigs() throws Exception {
-    LiquibaseConfig firstLiquibaseConfig = LiquibaseConfig.Builder.of(mock(DataSource.class))
+  public void shouldCreateConfigForMultipleLiquibaseConfigs() {
+    final LiquibaseConfig firstLiquibaseConfig = LiquibaseConfig.Builder.of(mock(DataSource.class))
         .build();
-    LiquibaseConfig secondLiquibaseConfig = LiquibaseConfig.Builder.of(mock(DataSource.class))
+    final LiquibaseConfig secondLiquibaseConfig = LiquibaseConfig.Builder.of(mock(DataSource.class))
         .build();
-    List<LiquibaseConfig> configs = Lists.newArrayList(firstLiquibaseConfig, secondLiquibaseConfig);
+    final List<LiquibaseConfig> configs = Lists.newArrayList(firstLiquibaseConfig, secondLiquibaseConfig);
+
     GuiceLiquibaseConfig config = Builder.of()
         .withLiquibaseConfigs(configs)
         .build();
 
-    assertThat(config, notNullValue());
-    assertThat(config.getConfigs(), hasSize(2));
-    assertThat(config.getConfigs(),
-            containsInAnyOrder(firstLiquibaseConfig, secondLiquibaseConfig));
+    assertThat(config)
+        .isNotNull();
+    assertThat(config.getConfigs())
+        .containsExactlyInAnyOrder(firstLiquibaseConfig, secondLiquibaseConfig);
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedConfig() {
-    NullPointerException e = assertThrows(NullPointerException.class, () -> Builder.of(null));
-
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("config must be defined."));
+  void shouldThrowExceptionForNotDefinedConfig() {
+    assertThatNullPointerException()
+        .isThrownBy(() -> Builder.of(null))
+        .withMessageContaining("config must be defined.");
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedConfigAddedToBuilder() {
-    NullPointerException e = assertThrows(NullPointerException.class, () -> Builder.of()
-            .withLiquibaseConfig(null));
-
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("config must be defined."));
+  void shouldThrowExceptionForNotDefinedConfigAddedToBuilder() {
+    assertThatNullPointerException()
+        .isThrownBy(() -> Builder.of().withLiquibaseConfig(null))
+        .withMessageContaining("config must be defined.");
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedConfigsAddedToBuilder() {
-    NullPointerException e = assertThrows(NullPointerException.class, () -> Builder.of()
-            .withLiquibaseConfigs(null));
-
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("configs must be defined."));
+  void shouldThrowExceptionForNotDefinedConfigsAddedToBuilder() {
+    assertThatNullPointerException()
+        .isThrownBy(() -> Builder.of().withLiquibaseConfigs(null))
+        .withMessageContaining("configs must be defined.");
   }
 
   @Test
-  public void shouldThrowExceptionForConfigsWithNotDefinedElement() {
-    NullPointerException e = assertThrows(NullPointerException.class, () -> {
-      List<LiquibaseConfig> configs = Lists.newArrayList(
-            LiquibaseConfig.Builder.of(new JDBCDataSource()).build(),
-            null);
-      Builder.of()
-            .withLiquibaseConfigs(configs);
-    });
-
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("config must be defined."));
+  void shouldThrowExceptionForConfigsWithNotDefinedElement() {
+    assertThatNullPointerException()
+        .isThrownBy(() -> Builder.of()
+            .withLiquibaseConfigs(Lists.newArrayList(
+                LiquibaseConfig.Builder.of(new JDBCDataSource()).build(), null)))
+        .withMessageContaining("config must be defined.");
   }
 
   @Test
-  public void shouldPassEqualsAndHashCodeContracts() throws Exception {
+  void shouldPassEqualsAndHashCodeContracts() {
     EqualsVerifier.forClass(GuiceLiquibaseConfig.class)
         .usingGetClass()
         .verify();
   }
 
   @Test
-  public void shouldPassEqualsAndHashCodeContractsForBuilder() throws Exception {
+  void shouldPassEqualsAndHashCodeContractsForBuilder() {
     EqualsVerifier.forClass(Builder.class)
         .usingGetClass()
         .verify();
   }
 
   @Test
-  public void verifyToString() throws Exception {
+  void verifyToString() {
     ToStringVerifier.forClass(GuiceLiquibaseConfig.class)
-            .withClassName(NameStyle.SIMPLE_NAME).verify();
+        .withClassName(NameStyle.SIMPLE_NAME).verify();
   }
 }

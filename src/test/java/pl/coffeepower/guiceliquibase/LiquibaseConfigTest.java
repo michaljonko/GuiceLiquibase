@@ -1,37 +1,36 @@
 package pl.coffeepower.guiceliquibase;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.sameInstance;
-import static org.hamcrest.collection.IsMapContaining.hasEntry;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.Collection;
-import java.util.Map;
-import javax.sql.DataSource;
+
 import liquibase.resource.ResourceAccessor;
 import liquibase.sdk.resource.MockResourceAccessor;
+
 import nl.jqno.equalsverifier.EqualsVerifier;
+
 import org.hsqldb.jdbc.JDBCDataSource;
-import org.hsqldb.jdbc.JDBCPool;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class LiquibaseConfigTest {
+import java.util.Collection;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+class LiquibaseConfigTest {
 
   @Test
-  public void shouldCreateConfigByBuilder() throws Exception {
+  void shouldCreateConfigByBuilder() {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE)
         .withChangeLogPath(Fixtures.CHANGELOG_PATH)
         .withDropFirst(Fixtures.DROP_FIRST)
@@ -43,22 +42,25 @@ public class LiquibaseConfigTest {
 
     LiquibaseConfig config = builder.build();
 
-    assertThat(config, not(sameInstance(builder.build())));
-    assertThat(config, is(builder.build()));
-    assertThat(config.getDataSource(), is(Fixtures.DATA_SOURCE));
-    assertThat(config.getChangeLogPath(), is(Fixtures.CHANGELOG_PATH));
-    assertThat(config.getResourceAccessor(), is(Fixtures.RESOURCE_ACCESSOR));
-    assertThat(config.getContexts(), hasSize(Fixtures.CONTEXT.size()));
-    assertThat(config.getContexts(), containsInAnyOrder(Fixtures.CONTEXT.toArray(new String[0])));
-    assertThat(config.getLabels(), hasSize(Fixtures.LABELS.size()));
-    assertThat(config.getLabels(), containsInAnyOrder(Fixtures.LABELS.toArray(new String[0])));
-    assertThat(config.getParameters().size(), is(Fixtures.PARAMETERS.size()));
-    Fixtures.PARAMETERS.forEach(
-        (key, value) -> assertThat(config.getParameters(), hasEntry(key, value)));
+    assertThat(config)
+        .isNotSameAs(builder.build())
+        .isEqualTo(builder.build());
+    assertThat(config.getDataSource())
+        .isEqualTo(Fixtures.DATA_SOURCE);
+    assertThat(config.getChangeLogPath())
+        .isEqualTo(Fixtures.CHANGELOG_PATH);
+    assertThat(config.getResourceAccessor())
+        .isEqualTo(Fixtures.RESOURCE_ACCESSOR);
+    assertThat(config.getContexts())
+        .containsExactlyInAnyOrderElementsOf(Fixtures.CONTEXT);
+    assertThat(config.getLabels())
+        .containsExactlyInAnyOrderElementsOf(Fixtures.LABELS);
+    assertThat(config.getParameters())
+        .containsExactlyEntriesOf(Fixtures.PARAMETERS);
   }
 
   @Test
-  public void shouldCreateDifferentBuilders() throws Exception {
+  void shouldCreateDifferentBuilders() {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE)
         .withChangeLogPath(Fixtures.CHANGELOG_PATH)
         .withDropFirst(Fixtures.DROP_FIRST)
@@ -68,51 +70,52 @@ public class LiquibaseConfigTest {
         .withLabels(Fixtures.LABELS)
         .withParameters(Fixtures.PARAMETERS);
 
-    assertThat(builder, is(Builder.of(builder)));
-    assertThat(builder, not(sameInstance(Builder.of(builder))));
-    assertThat(builder, is(Builder.of(builder).withContext("")));
-    assertThat(builder, not(is(Builder.of(builder).withContext("X"))));
-    assertThat(builder, is(Builder.of(builder).withLabel("")));
-    assertThat(builder, not(is(Builder.of(builder).withLabel("X"))));
-    assertThat(builder, is(Builder.of(builder).withParameter("", "")));
-    assertThat(builder, not(is(Builder.of(builder).withParameter("k", "v"))));
+    assertThat(builder)
+        .isEqualTo(Builder.of(builder));
+    assertThat(builder)
+        .isNotSameAs(Builder.of(builder));
+    assertThat(builder)
+        .isEqualTo(Builder.of(builder).withContext(""));
+    assertThat(builder)
+        .isNotEqualTo(Builder.of(builder).withContext("X"));
+    assertThat(builder).isEqualTo(Builder.of(builder).withLabel(""));
+    assertThat(builder)
+        .isNotEqualTo(Builder.of(builder).withLabel("X"));
+    assertThat(builder)
+        .isEqualTo(Builder.of(builder).withParameter("", ""));
+    assertThat(builder)
+        .isNotEqualTo(Builder.of(builder).withParameter("k", "v"));
   }
 
   @Test
-  public void shouldThrowExceptionForBuilderWithEmptyChangeLogPath() {
-    IllegalArgumentException e = Assertions.assertThrows(IllegalArgumentException.class,
-            () -> Builder.of(Fixtures.DATA_SOURCE)
+  void shouldThrowExceptionForBuilderWithEmptyChangeLogPath() {
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> Builder.of(Fixtures.DATA_SOURCE)
             .withChangeLogPath("")
-            .build());
-
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("changeLogPath must be defined."));
+            .build())
+        .withMessageContaining("changeLogPath must be defined.");
   }
 
   @Test
-  public void shouldThrowExceptionForBuilderWithNotDefinedChangeLogPath() {
-
-    IllegalArgumentException e = Assertions.assertThrows(IllegalArgumentException.class,
-            () -> Builder.of(Fixtures.DATA_SOURCE)
-                    .withChangeLogPath(null)
-                    .build());
-
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("changeLogPath must be defined."));
+  void shouldThrowExceptionForBuilderWithNotDefinedChangeLogPath() {
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> Builder.of(Fixtures.DATA_SOURCE)
+            .withChangeLogPath(null)
+            .build())
+        .withMessageContaining("changeLogPath must be defined.");
   }
 
   @Test
-  public void shouldThrowExceptionForBuilderWithNotDefinedResourceAccessor() {
-    NullPointerException e = Assertions.assertThrows(NullPointerException.class,
-            () -> Builder.of(Fixtures.DATA_SOURCE)
+  void shouldThrowExceptionForBuilderWithNotDefinedResourceAccessor() {
+    assertThatNullPointerException()
+        .isThrownBy(() -> Builder.of(Fixtures.DATA_SOURCE)
             .withResourceAccessor(null)
-            .build());
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("resourceAccessor must be defined."));
+            .build())
+        .withMessageContaining("resourceAccessor must be defined.");
   }
 
   @Test
-  public void shouldPassEqualsAndHashCodeContracts() throws Exception {
+  void shouldPassEqualsAndHashCodeContracts() {
     EqualsVerifier.forClass(LiquibaseConfig.class)
         .usingGetClass()
         .verify();
@@ -120,31 +123,28 @@ public class LiquibaseConfigTest {
 
   @SuppressFBWarnings("EC_NULL_ARG")
   @Test
-  public void shouldPassEqualsAndHashCodeContractsForBuilder() throws Exception {
+  void shouldPassEqualsAndHashCodeContractsForBuilder() {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE);
     Builder builderClone = Builder.of(builder)
         .withChangeLogPath(Fixtures.CHANGELOG_PATH);
 
-    assertThat(builder.hashCode(), is(builder.hashCode()));
-    assertThat(builder, is(builder));
-    assertThat(builder.hashCode(), is(builderClone.hashCode()));
-    assertThat(builder.hashCode(), not(is(Builder.of(new JDBCPool()))));
-    assertThat(builder, not(is(builderClone)));
-    assertThat(builder.equals(null), is(false));
+    assertThat(builder.hashCode())
+        .isEqualTo(builderClone.hashCode());
+    assertThat(builder)
+        .isNotEqualTo(builderClone);
   }
 
   @Test
-  public void shouldPassHashCodeForBuilder() throws Exception {
+  void shouldPassHashCodeForBuilder() {
     DataSource firstDataSource = mock(DataSource.class);
     DataSource secondDataSource = mock(DataSource.class);
 
-    assertThat(Builder.of(firstDataSource).hashCode(),
-        not(is(Builder.of(secondDataSource).hashCode())));
-    assertThat(Builder.of(firstDataSource).hashCode(), is(Builder.of(firstDataSource).hashCode()));
+    assertThat(Builder.of(firstDataSource).hashCode())
+        .isNotEqualTo(Builder.of(secondDataSource).hashCode());
   }
 
   @Test
-  public void verifyToString() throws Exception {
+  void verifyToString() throws Exception {
     ToStringVerifier.forClass(LiquibaseConfig.class).withClassName(NameStyle.SIMPLE_NAME)
         .withIgnoredFields("dataSource", "resourceAccessor").verify();
   }

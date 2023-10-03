@@ -1,14 +1,9 @@
 package pl.coffeepower.guiceliquibase;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.spy;
@@ -18,299 +13,237 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Monitor;
-import com.google.inject.AbstractModule;
 import com.google.inject.CreationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.Module;
-import com.google.inject.Provides;
-import com.google.inject.Stage;
+
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.UUID;
-import javax.inject.Singleton;
-import javax.sql.DataSource;
-import liquibase.configuration.GlobalConfiguration;
-import liquibase.configuration.LiquibaseConfiguration;
+
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
+
 import nl.jqno.equalsverifier.EqualsVerifier;
+
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
-public class GuiceLiquibaseModuleTest {
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.sql.DataSource;
+
+class GuiceLiquibaseModuleTest {
 
   private DatabaseFactory orgDatabaseFactory;
 
   @BeforeAll
-  public static void beforeClass() {
-    try {
-      Class.forName("org.hsqldb.jdbc.JDBCDriver");
-    } catch (ClassNotFoundException exception) {
-      throw new NoClassDefFoundError("Cannot find org.hsqldb.jdbc.JDBCDriver");
-    }
+  static void beforeClass() throws ClassNotFoundException {
+    Class.forName("org.hsqldb.jdbc.JDBCDriver");
   }
 
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp() {
     orgDatabaseFactory = DatabaseFactory.getInstance();
   }
 
   @AfterEach
-  public void tearDown() throws Exception {
+  public void tearDown() {
     DatabaseFactory.setInstance(orgDatabaseFactory);
   }
 
   @Test
-  public void shouldExecuteLiquibaseUpdateWithSingleConfiguration() throws Exception {
+  void shouldExecuteLiquibaseUpdateWithSingleConfiguration() throws Exception {
     Guice.createInjector(
         new GuiceLiquibaseModule(),
         Fixtures.SINGLE_DATA_SOURCE_MODULE);
 
-    try (Connection connection = Fixtures.SINGLE_DATA_SOURCE.getConnection()) {
-      try (PreparedStatement preparedStatement =
-               connection.prepareStatement(Fixtures.GET_ALL_FROM_TABLE_FOR_TEST_QUERY)) {
-        try (ResultSet resultSet = preparedStatement.executeQuery()) {
-          assertThat(resultSet.next(), is(true));
-          assertThat(resultSet.getInt(Fixtures.ID_COLUMN_NAME), is(Fixtures.EXPECTED_ID));
-          assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME),
-              is(Fixtures.EXPECTED_NAME));
-          assertThat(resultSet.getBoolean(Fixtures.ACTIVE_COLUMN_NAME),
-              is(Fixtures.EXPECTED_ACTIVE));
-          assertThat(resultSet.next(), is(false));
-        }
-      }
+    try (Connection connection = Fixtures.SINGLE_DATA_SOURCE.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(Fixtures.GET_ALL_FROM_TABLE_FOR_TEST_QUERY);
+         ResultSet resultSet = preparedStatement.executeQuery()) {
+      assertThat(resultSet.next())
+          .isTrue();
+      assertThat(resultSet.getInt(Fixtures.ID_COLUMN_NAME))
+          .isEqualTo(Fixtures.EXPECTED_ID);
+      assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME))
+          .isEqualTo(Fixtures.EXPECTED_NAME);
+      assertThat(resultSet.getBoolean(Fixtures.ACTIVE_COLUMN_NAME))
+          .isEqualTo(Fixtures.EXPECTED_ACTIVE);
+      assertThat(resultSet.next())
+          .isFalse();
     }
   }
 
   @Test
-  public void shouldExecuteLiquibaseUpdateWithMultipleConfigurations() throws Exception {
+  void shouldExecuteLiquibaseUpdateWithMultipleConfigurations() throws Exception {
     Guice.createInjector(
         new GuiceLiquibaseModule(),
         Fixtures.MULTI_DATA_SOURCE_MODULE);
 
-    try (Connection connection = Fixtures.MULTI_DATA_SOURCE.getConnection()) {
-      try (PreparedStatement preparedStatement = connection.prepareStatement(
-          Fixtures.GET_ALL_FROM_TABLE_FOR_MULTI_TESTS_QUERY)) {
-        try (ResultSet resultSet = preparedStatement.executeQuery()) {
-          assertThat(resultSet.next(), is(true));
-          assertThat(resultSet.getInt(Fixtures.ID_COLUMN_NAME), is(Fixtures.EXPECTED_ID));
-          assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME),
-              is(Fixtures.EXPECTED_NAME));
-          assertThat(resultSet.next(), is(false));
-        }
-      }
+    try (Connection connection = Fixtures.MULTI_DATA_SOURCE.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(Fixtures.GET_ALL_FROM_TABLE_FOR_MULTI_TESTS_QUERY);
+         ResultSet resultSet = preparedStatement.executeQuery()) {
+      assertThat(resultSet.next())
+          .isTrue();
+      assertThat(resultSet.getInt(Fixtures.ID_COLUMN_NAME))
+          .isEqualTo(Fixtures.EXPECTED_ID);
+      assertThat(resultSet.getString(Fixtures.NAME_COLUMN_NAME))
+          .isEqualTo(Fixtures.EXPECTED_NAME);
+      assertThat(resultSet.next())
+          .isFalse();
     }
   }
 
   @Test
-  public void shouldNotExecuteUpdateWhenShouldRunIsDisabled() {
+  void shouldNotExecuteUpdateWhenShouldRunIsDisabled() {
     DataSource dataSource = mock(DataSource.class);
 
     Guice.createInjector(
         new GuiceLiquibaseModule(),
-        new AbstractModule() {
-
-          @Override
-          protected void configure() {
-            bind(GuiceLiquibaseConfig.class)
-                .annotatedWith(GuiceLiquibaseConfiguration.class)
-                .toInstance(GuiceLiquibaseConfig.Builder
-                    .of(LiquibaseConfig.Builder
-                        .of(dataSource).withShouldRun(false)
-                        .build())
-                    .build());
-          }
-        });
+        binder -> binder.bind(GuiceLiquibaseConfig.class)
+            .annotatedWith(GuiceLiquibaseConfiguration.class)
+            .toInstance(GuiceLiquibaseConfig.Builder.of(LiquibaseConfig.Builder.of(dataSource).withShouldRun(false).build()).build()));
 
     verifyNoMoreInteractions(dataSource);
   }
 
   @Test
-  public void shouldNotExecuteUpdateSecondTime() throws Exception {
-    Injector injector = Guice.createInjector(
-        Stage.DEVELOPMENT, new GuiceLiquibaseModule(), Fixtures.DATA_SOURCE_MODULE);
+  void shouldNotExecuteUpdateSecondTime() throws Exception {
+    final Injector injector = Guice.createInjector(
+        new GuiceLiquibaseModule(),
+        Fixtures.DATA_SOURCE_MODULE);
 
-    injector.getInstance(GuiceLiquibaseModule.LiquibaseEngine.class)
+    injector.getInstance(GuiceLiquibaseModule.GuiceLiquibaseEngine.class)
         .process();
 
-    injector.getInstance(Key.get(GuiceLiquibaseConfig.class, GuiceLiquibaseConfiguration.class))
-        .getConfigs()
+    Set<LiquibaseConfig> configs = injector.getInstance(GuiceLiquibaseModule.LIQUIBASE_CONFIG_KEY)
+        .getConfigs();
+
+    configs
         .forEach(liquibaseConfig -> {
           try {
             DataSource dataSource = liquibaseConfig.getDataSource();
             verify(dataSource, only()).getConnection();
           } catch (SQLException ex) {
-            fail();
+            fail(ex);
           }
         });
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedRequiredBinding() {
-    CreationException e = assertThrows(CreationException.class,
-            () -> Guice.createInjector(new GuiceLiquibaseModule()));
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("Unable to create injector"));
-    assertThat(e.getMessage(), containsString("No implementation for"
+  void shouldThrowExceptionForNotDefinedRequiredBinding() {
+    assertThatThrownBy(() -> Guice.createInjector(new GuiceLiquibaseModule()))
+        .isInstanceOf(CreationException.class)
+        .hasMessageContaining("Unable to create injector")
+        .hasMessageContaining("No implementation for"
             + " GuiceLiquibaseConfig annotated with"
-            + " @GuiceLiquibaseConfiguration() was bound"));
+            + " @GuiceLiquibaseConfiguration() was bound");
   }
 
   @Test
-  public void shouldThrowExceptionForNullConfigValue() {
-    CreationException e = assertThrows(CreationException.class, () -> {
-      Guice.createInjector(new GuiceLiquibaseModule(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(GuiceLiquibaseConfig.class)
-                    .annotatedWith(GuiceLiquibaseConfiguration.class)
-                    .toInstance(null);
-          }
-        });
-    });
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("Unable to create injector"));
-    assertThat(e.getMessage(), containsString("Binding to null instances is not allowed."));
+  void shouldThrowExceptionForNullConfigValue() {
+    assertThatThrownBy(() -> Guice.createInjector(
+        new GuiceLiquibaseModule(),
+        binder -> binder.bind(GuiceLiquibaseConfig.class)
+            .annotatedWith(GuiceLiquibaseConfiguration.class)
+            .toInstance(null)))
+        .isInstanceOf(CreationException.class)
+        .hasMessageContaining("Unable to create injector")
+        .hasMessageContaining("Binding to null instances is not allowed.");
   }
 
   @Test
-  public void shouldThrowExceptionForEmptyConfigurationSet() {
-    CreationException e = assertThrows(CreationException.class, () -> {
-      Guice.createInjector(new GuiceLiquibaseModule(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(GuiceLiquibaseConfig.class)
-                    .annotatedWith(GuiceLiquibaseConfiguration.class)
-                    .toInstance(
-                            GuiceLiquibaseConfig.Builder
-                                    .of()
-                                    .build());
-          }
-        });
-    });
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("Injected configuration set is empty."));
-    assertThat(e.getCause(), instanceOf(IllegalArgumentException.class));
+  void shouldThrowExceptionForEmptyConfigurationSet() {
+    assertThatThrownBy(() -> Guice.createInjector(new GuiceLiquibaseModule(),
+        binder -> binder.bind(GuiceLiquibaseConfig.class)
+            .annotatedWith(GuiceLiquibaseConfiguration.class)
+            .toInstance(GuiceLiquibaseConfig.Builder.of().build())))
+        .isInstanceOf(CreationException.class)
+        .hasMessageContaining("Injected configuration set is empty.")
+        .hasCauseInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  public void shouldThrowExceptionForNotDefinedDataSourceConnection() throws Exception {
+  void shouldThrowExceptionForNotDefinedDataSourceConnection() throws Exception {
     DataSource dataSource = mock(DataSource.class);
     when(dataSource.getConnection()).thenReturn(null);
 
-    CreationException e = assertThrows(CreationException.class, () -> {
-      Guice.createInjector(new GuiceLiquibaseModule(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(GuiceLiquibaseConfig.class)
-                    .annotatedWith(GuiceLiquibaseConfiguration.class)
-                    .toInstance(GuiceLiquibaseConfig.Builder.of()
-                            .withLiquibaseConfig(
-                                    LiquibaseConfig.Builder.of(dataSource).build())
-                            .build());
-          }
-        });
-    });
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("Unable to create injector"));
-    assertThat(e.getMessage(), containsString("DataSource returns null connection instance."));
-    assertThat(e.getCause(), instanceOf(NullPointerException.class));
+    assertThatThrownBy(() -> Guice.createInjector(new GuiceLiquibaseModule(),
+        binder -> binder.bind(GuiceLiquibaseConfig.class)
+            .annotatedWith(GuiceLiquibaseConfiguration.class)
+            .toInstance(GuiceLiquibaseConfig.Builder.of().withLiquibaseConfig(LiquibaseConfig.Builder.of(dataSource).build()).build())))
+        .isInstanceOf(CreationException.class)
+        .hasMessageContaining("Unable to create injector")
+        .hasMessageContaining("DataSource returns null connection instance.")
+        .hasCauseInstanceOf(NullPointerException.class);
   }
 
   @Test
-  public void shouldThrowExceptionWhenProblemOccurredDuringDatabaseCreation() {
-    CreationException e = assertThrows(CreationException.class, () -> {
-      DataSource dataSource = mock(DataSource.class);
-      Connection connection = mock(Connection.class);
-      when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.getMetaData()).thenThrow(new SQLException("My SQLException."));
+  void shouldThrowExceptionWhenProblemOccurredDuringDatabaseCreation() throws SQLException {
+    DataSource dataSource = mock(DataSource.class);
+    Connection connection = mock(Connection.class);
+    when(dataSource.getConnection()).thenReturn(connection);
+    when(connection.getMetaData()).thenThrow(new SQLException("My SQLException."));
 
-      Guice.createInjector(
-        new GuiceLiquibaseModule(),
-        new AbstractModule() {
+    assertThatThrownBy(() -> Guice.createInjector(new GuiceLiquibaseModule(),
+        binder -> binder.bind(GuiceLiquibaseConfig.class)
+            .annotatedWith(GuiceLiquibaseConfiguration.class)
+            .toInstance(GuiceLiquibaseConfig.Builder.of(LiquibaseConfig.Builder.of(dataSource).build()).build())))
+        .isInstanceOf(CreationException.class)
+        .hasMessageContaining("My SQLException.")
+        .hasCauseInstanceOf(UnexpectedLiquibaseException.class);
 
-          @Override
-          protected void configure() {
-            bind(GuiceLiquibaseConfig.class)
-                    .annotatedWith(GuiceLiquibaseConfiguration.class)
-                    .toInstance(GuiceLiquibaseConfig.Builder
-                            .of(LiquibaseConfig.Builder
-                                    .of(dataSource)
-                                    .build())
-                            .build());
-          }
-        });
-
-      verify(dataSource).getConnection();
-      verify(connection).rollback();
-      verify(connection).close();
-      verifyNoMoreInteractions(connection, dataSource);
-    });
-
-    assertThat(e, notNullValue());
-    assertThat(e.getMessage(), containsString("My SQLException."));
-    assertThat(e.getCause(), instanceOf(UnexpectedLiquibaseException.class));
+    verify(dataSource).getConnection();
+    verify(connection).getMetaData();
+    verify(connection).close();
+    verifyNoMoreInteractions(connection, dataSource);
   }
 
   @Test
-  public void shouldThrowExceptionWhenProblemOccurredDuringLiquibaseUpdate() throws Exception {
+  void shouldThrowExceptionWhenProblemOccurredDuringLiquibaseUpdate() throws SQLException, DatabaseException {
+    DataSource dataSource = mock(DataSource.class);
+    Connection connection = mock(Connection.class);
+    DatabaseFactory databaseFactory = mock(DatabaseFactory.class);
+    Database database = mock(Database.class);
+    when(dataSource.getConnection()).thenReturn(connection);
+    when(databaseFactory.findCorrectDatabaseImplementation(any())).thenReturn(database);
+    DatabaseFactory.setInstance(databaseFactory);
 
-    CreationException e = assertThrows(CreationException.class, () -> {
-      DataSource dataSource = mock(DataSource.class);
-      Connection connection = mock(Connection.class);
-      DatabaseFactory databaseFactory = mock(DatabaseFactory.class);
-      Database database = mock(Database.class);
-      when(dataSource.getConnection()).thenReturn(connection);
-      when(databaseFactory.findCorrectDatabaseImplementation(any())).thenReturn(database);
-      doThrow(new DatabaseException("Problem - Liquibase.")).when(database).rollback();
-      DatabaseFactory.setInstance(databaseFactory);
+    assertThatThrownBy(() -> Guice.createInjector(new GuiceLiquibaseModule(),
+        binder -> binder.bind(GuiceLiquibaseConfig.class)
+            .annotatedWith(GuiceLiquibaseConfiguration.class)
+            .toInstance(GuiceLiquibaseConfig.Builder.of(LiquibaseConfig.Builder.of(dataSource).build()).build())))
+        .isInstanceOf(CreationException.class)
+        .hasCauseInstanceOf(UnexpectedLiquibaseException.class)
+        .hasRootCauseInstanceOf(NullPointerException.class);
 
-      Guice.createInjector(new GuiceLiquibaseModule(), new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(GuiceLiquibaseConfig.class).annotatedWith(GuiceLiquibaseConfiguration.class)
-                  .toInstance(GuiceLiquibaseConfig.Builder
-                          .of(LiquibaseConfig.Builder.of(dataSource).build())
-                          .build());
-        }
-      });
-
-      verify(dataSource).getConnection();
-      verify(connection).rollback();
-      verify(connection).close();
-      verify(database).close();
-      verifyNoMoreInteractions(connection, dataSource, database);
-    });
-    assertThat(e, notNullValue());
+    verify(dataSource).getConnection();
+    verify(connection).close();
+    verify(database).close();
+    verifyNoMoreInteractions(connection, dataSource);
   }
 
   @Test
-  public void shouldPassEqualsAndHashCodeContractsInGuiceLiquibaseEngine() {
+  void shouldPassEqualsAndHashCodeContractsInGuiceLiquibaseEngine() {
     EqualsVerifier.forClass(getGuiceLiquibaseEngineClass())
         .usingGetClass()
         .withPrefabValues(
             GuiceLiquibaseConfig.class,
             GuiceLiquibaseConfig.Builder.of().build(),
-            GuiceLiquibaseConfig.Builder.of(
-                LiquibaseConfig.Builder.of(Fixtures.SINGLE_DATA_SOURCE)
-                    .build())
-                .build())
+            GuiceLiquibaseConfig.Builder.of(LiquibaseConfig.Builder.of(Fixtures.SINGLE_DATA_SOURCE).build()).build())
         .withPrefabValues(
             Monitor.class,
             new Monitor(true),
@@ -319,18 +252,17 @@ public class GuiceLiquibaseModuleTest {
   }
 
   @Test
-  public void verifyToStringInGuiceLiquibaseEngine() {
+  void verifyToStringInGuiceLiquibaseEngine() {
     ToStringVerifier.forClass(getGuiceLiquibaseEngineClass()).withClassName(NameStyle.SIMPLE_NAME)
         .withIgnoredFields("dataSource", "resourceAccessor").verify();
   }
 
   @SuppressWarnings("unchecked")
-  private Class<GuiceLiquibaseModule.LiquibaseEngine> getGuiceLiquibaseEngineClass() {
+  private Class<GuiceLiquibaseModule.GuiceLiquibaseEngine> getGuiceLiquibaseEngineClass() {
     try {
-      return (Class<GuiceLiquibaseModule.LiquibaseEngine>)
+      return (Class<GuiceLiquibaseModule.GuiceLiquibaseEngine>)
           Class.forName("pl.coffeepower.guiceliquibase.GuiceLiquibaseModule$GuiceLiquibaseEngine");
     } catch (ClassNotFoundException exception) {
-      fail(exception.getMessage());
       throw new IllegalStateException(exception);
     }
   }
@@ -349,71 +281,45 @@ public class GuiceLiquibaseModuleTest {
     private static final boolean EXPECTED_ACTIVE = true;
     private static final DataSource SINGLE_DATA_SOURCE = createJdbcDataSource();
     private static final DataSource MULTI_DATA_SOURCE = createJdbcDataSource();
-    private static final Module DATA_SOURCE_MODULE = new AbstractModule() {
-
-      @Provides
-      @Singleton
-      @GuiceLiquibaseConfiguration
-      private GuiceLiquibaseConfig createConfig() {
-        return GuiceLiquibaseConfig.Builder.of(
-            LiquibaseConfig.Builder.of(createJdbcDataSource())
-                .build())
-            .build();
-      }
-
-      @Override
-      protected void configure() {
-      }
+    private static final Module DATA_SOURCE_MODULE = binder -> {
+      GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder.of(LiquibaseConfig.Builder.of(createJdbcDataSource()).build()).build();
+      binder.bind(GuiceLiquibaseConfig.class)
+          .annotatedWith(GuiceLiquibaseConfiguration.class)
+          .toInstance(config);
     };
-    private static final Module SINGLE_DATA_SOURCE_MODULE = new AbstractModule() {
-
-      @Provides
-      @Singleton
-      @GuiceLiquibaseConfiguration
-      private GuiceLiquibaseConfig createConfig() {
-        return GuiceLiquibaseConfig.Builder.of(
-            LiquibaseConfig.Builder.of(SINGLE_DATA_SOURCE)
-                .build())
-            .build();
-      }
-
-      @Override
-      protected void configure() {
-      }
+    private static final Module SINGLE_DATA_SOURCE_MODULE = binder -> {
+      GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
+          .of(LiquibaseConfig.Builder.of(SINGLE_DATA_SOURCE).build()).build();
+      binder.bind(GuiceLiquibaseConfig.class)
+          .annotatedWith(GuiceLiquibaseConfiguration.class)
+          .toInstance(config);
     };
-    private static final Module MULTI_DATA_SOURCE_MODULE = new AbstractModule() {
-
-      @Provides
-      @Singleton
-      @GuiceLiquibaseConfiguration
-      private GuiceLiquibaseConfig createConfig() {
-        ClassLoader classLoader = getClass().getClassLoader();
-        return GuiceLiquibaseConfig.Builder
-            .of()
-            .withLiquibaseConfig(
-                LiquibaseConfig.Builder.of(MULTI_DATA_SOURCE)
-                    .withChangeLogPath("liquibase/emptyChangeLog.xml")
-                    .withResourceAccessor(new ClassLoaderResourceAccessor(classLoader))
-                    .withDropFirst(false)
-                    .build())
-            .withLiquibaseConfig(
-                LiquibaseConfig.Builder.of(MULTI_DATA_SOURCE)
-                    .withChangeLogPath("liquibase/changeLogMulti.xml")
-                    .withResourceAccessor(new ClassLoaderResourceAccessor(classLoader))
-                    .withDropFirst(true)
-                    .withParameters(ImmutableMap.of("testParameter", "testValue"))
-                    .build())
-            .build();
-      }
-
-      @Override
-      protected void configure() {
-      }
+    private static final Module MULTI_DATA_SOURCE_MODULE = binder -> {
+      ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+      GuiceLiquibaseConfig config = GuiceLiquibaseConfig.Builder
+          .of()
+          .withLiquibaseConfig(
+              LiquibaseConfig.Builder.of(MULTI_DATA_SOURCE)
+                  .withChangeLogPath("liquibase/emptyChangeLog.xml")
+                  .withResourceAccessor(new ClassLoaderResourceAccessor(classLoader))
+                  .withDropFirst(false)
+                  .build())
+          .withLiquibaseConfig(
+              LiquibaseConfig.Builder.of(MULTI_DATA_SOURCE)
+                  .withChangeLogPath("liquibase/changeLogMulti.xml")
+                  .withResourceAccessor(new ClassLoaderResourceAccessor(classLoader))
+                  .withDropFirst(true)
+                  .withParameters(ImmutableMap.of("testParameter", "testValue"))
+                  .build())
+          .build();
+      binder.bind(GuiceLiquibaseConfig.class)
+          .annotatedWith(GuiceLiquibaseConfiguration.class)
+          .toInstance(config);
     };
 
     private static JDBCDataSource createJdbcDataSource() {
       JDBCDataSource dataSource = new JDBCDataSource();
-      dataSource.setDatabase("jdbc:hsqldb:mem:" + UUID.randomUUID().toString());
+      dataSource.setDatabase("jdbc:hsqldb:mem:" + UUID.randomUUID());
       dataSource.setUser("SA");
       return spy(dataSource);
     }

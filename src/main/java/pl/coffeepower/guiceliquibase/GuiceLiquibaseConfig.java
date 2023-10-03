@@ -62,7 +62,7 @@ public final class GuiceLiquibaseConfig {
      * @return new Builder instance
      */
     public static Builder of() {
-      return new Builder(Sets.newHashSet());
+      return new Builder(Sets.newLinkedHashSet());
     }
 
     /**
@@ -73,8 +73,8 @@ public final class GuiceLiquibaseConfig {
      * @throws NullPointerException when config is null
      */
     public static Builder of(LiquibaseConfig config) {
-      return new Builder(
-          Sets.newHashSet(checkNotNull(config, "config must be defined.")));
+      return of()
+          .withLiquibaseConfig(checkNotNull(config, "config must be defined."));
     }
 
     /**
@@ -84,7 +84,7 @@ public final class GuiceLiquibaseConfig {
      * @return itself
      * @throws NullPointerException when config is null
      */
-    public final Builder withLiquibaseConfig(LiquibaseConfig config) {
+    public Builder withLiquibaseConfig(LiquibaseConfig config) {
       configs.add(checkNotNull(config, "config must be defined."));
       return this;
     }
@@ -96,7 +96,7 @@ public final class GuiceLiquibaseConfig {
      * @return itself
      * @throws NullPointerException when null element is in the collection or collection is null
      */
-    public final Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
+    public Builder withLiquibaseConfigs(Collection<LiquibaseConfig> configs) {
       checkNotNull(configs, "configs must be defined.")
           .forEach(this::withLiquibaseConfig);
       return this;
@@ -108,7 +108,7 @@ public final class GuiceLiquibaseConfig {
      *
      * @return new <code>GuiceLiquibaseConfig</code> object
      */
-    public final GuiceLiquibaseConfig build() {
+    public GuiceLiquibaseConfig build() {
       return new GuiceLiquibaseConfig(configs);
     }
 
