@@ -6,18 +6,13 @@ import static org.mockito.Mockito.mock;
 import static pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig.Builder;
 
 import com.google.common.collect.Lists;
-
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
-
+import java.util.List;
+import javax.sql.DataSource;
 import nl.jqno.equalsverifier.EqualsVerifier;
-
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
-import javax.sql.DataSource;
 
 class GuiceLiquibaseConfigTest {
 
@@ -53,7 +48,8 @@ class GuiceLiquibaseConfigTest {
         .build();
     final LiquibaseConfig secondLiquibaseConfig = LiquibaseConfig.Builder.of(mock(DataSource.class))
         .build();
-    final List<LiquibaseConfig> configs = Lists.newArrayList(firstLiquibaseConfig, secondLiquibaseConfig);
+    final List<LiquibaseConfig> configs = Lists.newArrayList(firstLiquibaseConfig,
+        secondLiquibaseConfig);
 
     GuiceLiquibaseConfig config = Builder.of()
         .withLiquibaseConfigs(configs)

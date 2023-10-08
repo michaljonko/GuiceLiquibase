@@ -10,4 +10,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @BindingAnnotation
 public @interface GuiceLiquibaseConfiguration {
+  //annotation interface
 }

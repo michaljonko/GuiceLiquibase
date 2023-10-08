@@ -8,24 +8,16 @@ import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
-
-import liquibase.resource.ResourceAccessor;
-import liquibase.sdk.resource.MockResourceAccessor;
-
-import nl.jqno.equalsverifier.EqualsVerifier;
-
-import org.hsqldb.jdbc.JDBCDataSource;
-import org.junit.jupiter.api.Test;
-
 import java.util.Collection;
 import java.util.Map;
-
 import javax.sql.DataSource;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import liquibase.resource.ResourceAccessor;
+import liquibase.sdk.resource.MockResourceAccessor;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.jupiter.api.Test;
 
 class LiquibaseConfigTest {
 
@@ -121,7 +113,6 @@ class LiquibaseConfigTest {
         .verify();
   }
 
-  @SuppressFBWarnings("EC_NULL_ARG")
   @Test
   void shouldPassEqualsAndHashCodeContractsForBuilder() {
     Builder builder = Builder.of(Fixtures.DATA_SOURCE);

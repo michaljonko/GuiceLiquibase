@@ -7,7 +7,6 @@ import static java.util.Objects.nonNull;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
@@ -93,8 +92,10 @@ public final class GuiceLiquibaseModule extends AbstractModule {
 
     private void executeLiquibaseUpdate(LiquibaseConfig config) {
       if (!config.shouldRun()) {
-        LOGGER.info("Liquibase did not run on config with changeLogPath {} because LiquibaseConfig.shouldRun was set to false.",
-                config.getChangeLogPath());
+        LOGGER.info(
+            "Liquibase did not run on config with changeLogPath {} because "
+                + "LiquibaseConfig.shouldRun was set to false.",
+            config.getChangeLogPath());
         return;
       }
       LOGGER.info("Applying changes for {}", config);
@@ -106,7 +107,8 @@ public final class GuiceLiquibaseModule extends AbstractModule {
         connection = checkNotNull(config.getDataSource(), "DataSource must be defined.")
             .getConnection();
         database = DatabaseFactory.getInstance()
-            .findCorrectDatabaseImplementation(new JdbcConnection(checkNotNull(connection, "DataSource returns null connection instance.")));
+            .findCorrectDatabaseImplementation(new JdbcConnection(
+                checkNotNull(connection, "DataSource returns null connection instance.")));
         liquibase = new Liquibase(
             config.getChangeLogPath(),
             config.getResourceAccessor(),

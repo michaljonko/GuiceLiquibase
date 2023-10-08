@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -49,13 +48,13 @@ public final class LiquibaseConfig {
    * @throws IllegalArgumentException when <code>changeLogPath</code> is null or empty
    */
   private LiquibaseConfig(DataSource dataSource,
-                          String changeLogPath,
-                          ResourceAccessor resourceAccessor,
-                          boolean dropFirst,
-                          boolean shouldRun,
-                          Collection<String> contexts,
-                          Collection<String> labels,
-                          Map<String, String> parameters) {
+      String changeLogPath,
+      ResourceAccessor resourceAccessor,
+      boolean dropFirst,
+      boolean shouldRun,
+      Collection<String> contexts,
+      Collection<String> labels,
+      Map<String, String> parameters) {
     this.dataSource = checkNotNull(dataSource, "dataSource must be defined.");
     this.resourceAccessor =
         checkNotNull(resourceAccessor, "resourceAccessor must be defined.");
@@ -99,15 +98,15 @@ public final class LiquibaseConfig {
   }
 
   public Set<String> getContexts() {
-    return contexts;
+    return ImmutableSet.copyOf(contexts);
   }
 
   public Set<String> getLabels() {
-    return labels;
+    return ImmutableSet.copyOf(labels);
   }
 
   public Map<String, String> getParameters() {
-    return parameters;
+    return ImmutableMap.copyOf(parameters);
   }
 
   @Override
@@ -132,7 +131,7 @@ public final class LiquibaseConfig {
   @Override
   public int hashCode() {
     return Objects.hash(this.dataSource, this.changeLogPath, this.resourceAccessor, this.dropFirst,
-            this.shouldRun, this.contexts, this.labels, this.parameters);
+        this.shouldRun, this.contexts, this.labels, this.parameters);
   }
 
   @Override
@@ -156,13 +155,14 @@ public final class LiquibaseConfig {
     private static final Splitter CONTEXT_AND_LABEL_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults();
     private final DataSource dataSource;
-    private String changeLogPath = DEFAULT_CHANGE_LOG_PATH;
-    private ResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader());
-    private boolean dropFirst = false;
-    private boolean shouldRun = true;
     private final Set<String> contexts = Sets.newHashSet();
     private final Set<String> labels = Sets.newHashSet();
     private final Map<String, String> parameters = Maps.newHashMap();
+    private String changeLogPath = DEFAULT_CHANGE_LOG_PATH;
+    private ResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(
+        this.getClass().getClassLoader());
+    private boolean dropFirst = false;
+    private boolean shouldRun = true;
 
     private Builder(DataSource dataSource) {
       this.dataSource = dataSource;
@@ -232,10 +232,11 @@ public final class LiquibaseConfig {
     }
 
     /**
-     * Default value to true, set to it to false to disable liquibase execution.
+     * Default value to true, set to it to false to disable liquibase execution for that config.
      *
      * @param value true/false flag
      * @return itself
+     * @since 0.1.0
      */
     public Builder withShouldRun(boolean value) {
       this.shouldRun = value;

@@ -7,25 +7,20 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
-
-import liquibase.resource.ClassLoaderResourceAccessor;
-
-import org.hsqldb.jdbc.JDBCDataSource;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Set;
 import java.util.UUID;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
 @Disabled("Integration test - example how to use library")
 class Example {
@@ -52,8 +47,8 @@ class Example {
   private Set<String> getTablesFromDataSource(DataSource dataSource) throws SQLException {
     Set<String> createdTables = Sets.newHashSet();
     try (Connection connection = dataSource.getConnection();
-         ResultSet tables = connection.getMetaData()
-             .getTables("PUBLIC", "PUBLIC", null, new String[] {"TABLE"})) {
+        ResultSet tables = connection.getMetaData()
+            .getTables("PUBLIC", "PUBLIC", null, new String[]{"TABLE"})) {
       while (tables.next()) {
         createdTables.add(tables.getString("TABLE_NAME"));
       }
