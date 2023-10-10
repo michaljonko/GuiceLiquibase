@@ -1,13 +1,13 @@
-package pl.coffeepower.guiceliquibase;
+package io.github.michaljonko.guiceliquibase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.Mockito.mock;
-import static pl.coffeepower.guiceliquibase.GuiceLiquibaseConfig.Builder;
 
 import com.google.common.collect.Lists;
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
+import io.github.michaljonko.guiceliquibase.GuiceLiquibaseConfig.Builder;
 import java.util.List;
 import javax.sql.DataSource;
 import nl.jqno.equalsverifier.EqualsVerifier;

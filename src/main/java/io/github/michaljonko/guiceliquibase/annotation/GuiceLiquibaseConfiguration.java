@@ -1,4 +1,4 @@
-package pl.coffeepower.guiceliquibase.annotation;
+package io.github.michaljonko.guiceliquibase.annotation;
 
 import com.google.inject.BindingAnnotation;
 import java.lang.annotation.ElementType;

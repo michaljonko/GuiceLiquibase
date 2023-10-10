@@ -1,4 +1,4 @@
-package pl.coffeepower.guiceliquibase;
+package io.github.michaljonko.guiceliquibase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -19,6 +19,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
+import io.github.michaljonko.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,7 +38,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
 class GuiceLiquibaseModuleTest {
 
@@ -271,7 +271,8 @@ class GuiceLiquibaseModuleTest {
   private Class<GuiceLiquibaseModule.GuiceLiquibaseEngine> getGuiceLiquibaseEngineClass() {
     try {
       return (Class<GuiceLiquibaseModule.GuiceLiquibaseEngine>)
-          Class.forName("pl.coffeepower.guiceliquibase.GuiceLiquibaseModule$GuiceLiquibaseEngine");
+          Class.forName(
+              "io.github.michaljonko.guiceliquibase.GuiceLiquibaseModule$GuiceLiquibaseEngine");
     } catch (ClassNotFoundException exception) {
       throw new IllegalStateException(exception);
     }

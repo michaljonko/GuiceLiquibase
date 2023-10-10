@@ -1,15 +1,15 @@
-package pl.coffeepower.guiceliquibase;
+package io.github.michaljonko.guiceliquibase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.Mockito.mock;
-import static pl.coffeepower.guiceliquibase.LiquibaseConfig.Builder;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.jparams.verifier.tostring.NameStyle;
 import com.jparams.verifier.tostring.ToStringVerifier;
+import io.github.michaljonko.guiceliquibase.LiquibaseConfig.Builder;
 import java.util.Collection;
 import java.util.Map;
 import javax.sql.DataSource;

@@ -1,6 +1,7 @@
 # Changelog
 ---
 - #### 0.1.0
+  - New package for all classes - breaking changes
   - Upgraded to Gradle 7.6.2
   - Upgraded checkstyle and fix checks
   - Added SpotBugs instead of FindBugs

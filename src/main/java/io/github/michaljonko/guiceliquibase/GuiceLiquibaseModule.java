@@ -1,4 +1,4 @@
-package pl.coffeepower.guiceliquibase;
+package io.github.michaljonko.guiceliquibase;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -7,6 +7,7 @@ import static java.util.Objects.nonNull;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
+import io.github.michaljonko.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
@@ -26,7 +27,6 @@ import liquibase.integration.commandline.LiquibaseCommandLineConfiguration;
 import liquibase.util.LiquibaseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 
 
 public final class GuiceLiquibaseModule extends AbstractModule {

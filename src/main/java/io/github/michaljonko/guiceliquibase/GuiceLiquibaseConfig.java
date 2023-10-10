@@ -1,4 +1,4 @@
-package pl.coffeepower.guiceliquibase;
+package io.github.michaljonko.guiceliquibase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
