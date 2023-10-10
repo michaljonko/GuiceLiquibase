@@ -1,4 +1,4 @@
-package pl.coffeepower.guiceliquibase;
+package io.github.michaljonko.guiceliquibase;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -7,61 +7,47 @@ import static java.util.Objects.nonNull;
 import com.google.common.util.concurrent.Monitor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
-
-import liquibase.Contexts;
-import liquibase.LabelExpression;
-import liquibase.Liquibase;
-import liquibase.configuration.GlobalConfiguration;
-import liquibase.configuration.LiquibaseConfiguration;
-import liquibase.database.Database;
-import liquibase.database.DatabaseConnection;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.DatabaseException;
-import liquibase.exception.LiquibaseException;
-import liquibase.exception.UnexpectedLiquibaseException;
-import liquibase.util.LiquibaseUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
-
+import io.github.michaljonko.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.inject.Inject;
+import liquibase.Contexts;
+import liquibase.LabelExpression;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.DatabaseException;
+import liquibase.exception.LiquibaseException;
+import liquibase.exception.UnexpectedLiquibaseException;
+import liquibase.integration.commandline.LiquibaseCommandLineConfiguration;
+import liquibase.util.LiquibaseUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public final class GuiceLiquibaseModule extends AbstractModule {
 
-  private static final Key<GuiceLiquibaseConfig> LIQUIBASE_CONFIG_KEY =
+  static final Key<GuiceLiquibaseConfig> LIQUIBASE_CONFIG_KEY =
       Key.get(GuiceLiquibaseConfig.class, GuiceLiquibaseConfiguration.class);
 
   @Override
   protected void configure() {
     requireBinding(LIQUIBASE_CONFIG_KEY);
-    bind(LiquibaseEngine.class).to(GuiceLiquibaseEngine.class).asEagerSingleton();
+    bind(GuiceLiquibaseEngine.class).asEagerSingleton();
     requestInjection(this);
   }
 
   @Inject
-  private void executeGuiceLiquibaseEngine(LiquibaseEngine guiceLiquibaseEngine) {
-    try {
-      checkNotNull(guiceLiquibaseEngine, "LiquibaseEngine has to be defined.").process();
-    } catch (LiquibaseException exception) {
-      throw new UnexpectedLiquibaseException(exception);
-    }
+  private void executeGuiceLiquibaseEngine(GuiceLiquibaseEngine guiceLiquibaseEngine) {
+    checkNotNull(guiceLiquibaseEngine, "LiquibaseEngine has to be defined.")
+        .process();
   }
 
-  interface LiquibaseEngine {
-
-    void process() throws LiquibaseException;
-  }
-
-  private static final class GuiceLiquibaseEngine implements LiquibaseEngine {
+  static final class GuiceLiquibaseEngine {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceLiquibaseEngine.class);
     private final Monitor monitor;
@@ -77,8 +63,7 @@ public final class GuiceLiquibaseModule extends AbstractModule {
       this.monitor = new Monitor(true);
     }
 
-    @Override
-    public void process() {
+    void process() {
       if (monitor.tryEnter()) {
         try {
           if (updated.get()) {
@@ -96,40 +81,41 @@ public final class GuiceLiquibaseModule extends AbstractModule {
     }
 
     private boolean shouldExecuteLiquibaseUpdate() {
-      LiquibaseConfiguration liquibaseConfiguration = LiquibaseConfiguration.getInstance();
-      boolean shouldRun = liquibaseConfiguration
-          .getConfiguration(GlobalConfiguration.class)
-          .getShouldRun();
-      if (!shouldRun) {
-        LOGGER.warn("Cannot run Liquibase updates because {} is set to false.",
-            liquibaseConfiguration
-                .describeValueLookupLogic(GlobalConfiguration.class, GlobalConfiguration.SHOULD_RUN)
+      boolean globalShouldRun = LiquibaseCommandLineConfiguration.SHOULD_RUN.getCurrentValue();
+      if (!globalShouldRun) {
+        LOGGER.warn("Cannot run Liquibase updates because {} is set to false (global setting).",
+            LiquibaseCommandLineConfiguration.SHOULD_RUN.getDescription()
         );
       }
-      return shouldRun;
+      return globalShouldRun;
     }
 
     private void executeLiquibaseUpdate(LiquibaseConfig config) {
+      if (!config.shouldRun()) {
+        LOGGER.info(
+            "Liquibase did not run on config with changeLogPath {} because "
+                + "LiquibaseConfig.shouldRun was set to false.",
+            config.getChangeLogPath());
+        return;
+      }
       LOGGER.info("Applying changes for {}", config);
+
       Connection connection = null;
       Database database = null;
       Liquibase liquibase = null;
       try {
         connection = checkNotNull(config.getDataSource(), "DataSource must be defined.")
             .getConnection();
-        DatabaseConnection databaseConnection = new JdbcConnection(
-            checkNotNull(connection, "DataSource returns null connection instance."));
         database = DatabaseFactory.getInstance()
-            .findCorrectDatabaseImplementation(
-                checkNotNull(databaseConnection,
-                    "DatabaseConnection created from DataSource cannot be null."));
+            .findCorrectDatabaseImplementation(new JdbcConnection(
+                checkNotNull(connection, "DataSource returns null connection instance.")));
         liquibase = new Liquibase(
             config.getChangeLogPath(),
             config.getResourceAccessor(),
             database);
         checkNotNull(config.getParameters(), "Parameters map cannot be null.")
             .forEach(liquibase::setChangeLogParameter);
-        if (config.isDropFirst()) {
+        if (config.dropFirst()) {
           liquibase.dropAll();
         }
         liquibase.update(
@@ -142,18 +128,18 @@ public final class GuiceLiquibaseModule extends AbstractModule {
         LOGGER.error("Problem during Liquibase calls.", exception);
         throw new UnexpectedLiquibaseException(exception);
       } finally {
-      	if(nonNull(liquibase)) {
-      	  try {
-		    liquibase.close();
-		  } catch (Exception exception) {
-		    LOGGER.error("Problem during liquibase.close() call.", exception);
-      	  }
-		}
+        if (nonNull(liquibase)) {
+          try {
+            liquibase.close();
+          } catch (Exception exception) {
+            LOGGER.error("Problem during liquibase.close() call.", exception);
+          }
+        }
         if (nonNull(database) && nonNull(database.getConnection())) {
           try {
-          	if(!database.getConnection().isClosed()) {
-          	  database.close();
-			}
+            if (!database.getConnection().isClosed()) {
+              database.close();
+            }
           } catch (DatabaseException exception) {
             LOGGER.error("Problem during database.close() call.", exception);
           }
@@ -162,7 +148,7 @@ public final class GuiceLiquibaseModule extends AbstractModule {
           try {
             connection.close();
           } catch (SQLException exception) {
-            LOGGER.error("Problem during connection closing.", exception);
+            LOGGER.error("Problem during connection.close() call.", exception);
           }
         }
       }

@@ -1,32 +1,31 @@
 import java.nio.charset.Charset
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.text.SimpleDateFormat
 
-buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7'
-        classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
-    }
+plugins {
+    id 'java'
+    id 'signing'
+
+    id 'checkstyle'
+    id 'com.github.spotbugs' version '5.1.3'
+    id 'info.solidsoft.pitest' version '1.9.11'
+
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+
+    id 'maven-publish'
+    id 'io.github.gradle-nexus.publish-plugin' version '1.3.0'
 }
 
-apply plugin: 'java'
-apply plugin: 'signing'
-apply plugin: 'findbugs'
-apply plugin: 'checkstyle'
-apply plugin: 'info.solidsoft.pitest'
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'maven-publish'
+wrapper {
+    gradleVersion = '7.6.2'
+    distributionType = Wrapper.DistributionType.BIN
+}
 
 defaultTasks 'clean', 'build', 'jar', 'publishToMavenLocal'
 
-def appGroup = 'pl.coffeepower'
-def appVersion = Files.readAllLines(projectDir.toPath().resolve('version.txt'), Charset.forName("UTF-8"))
+def appGroup = 'io.github.michaljonko'
+def versionPath = projectDir.toPath().resolve('version.txt')
+def appVersion = Files.readAllLines(versionPath, Charset.forName("UTF-8"))
         .first()
         .trim()
 def appName = rootProject.name
@@ -44,7 +43,7 @@ compileJava {
 
 build.dependsOn 'pitest'
 
-task sourcesJar(type: Jar) {
+task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
 }
@@ -54,41 +53,74 @@ task javadocsJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+artifacts {
+    archives jar, javadocsJar, sourcesJar
+}
+
+jar {
+    manifest {
+        attributes(
+                'Built-By': 'Michal Jonko',
+                'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+                'Created-By': "Gradle ${gradle.gradleVersion}",
+                'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                'Build-OS': "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+        )
+    }
+}
+
+
+ext["signing.keyId"] = project.findProperty('signing.keyId') ?: System.getenv("GPG_KEY_ID")
+ext["signing.password"] = project.findProperty('signing.password') ?: System.getenv("GPG_PASSWORD")
+ext["signing.secretKeyRingFile"] = project.findProperty('signing.secretKeyRingFile') ?: System.getenv("GPG_KEYRING_FILE")
+
+signing {
+    sign publishing.publications
+}
+
 publishing {
     publications {
-        GuiceLiquibase(MavenPublication) {
+        mavenJava(MavenPublication) {
             from components.java
             groupId appGroup
             artifactId appName
             version appVersion
-            artifacts = [jar, sourcesJar, javadocsJar]
+
+            pom {
+                name = appName
+                description = 'Guice module for Liquibase to execute DB change sets automatically as a CDI extension'
+                url = 'https://github.com/michaljonko/GuiceLiquibase'
+                licenses {
+                    license {
+                        name = 'Apache-2.0'
+                        url = 'https://raw.githubusercontent.com/michaljonko/GuiceLiquibase/master/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'michaljonko'
+                        name = 'Michal Jonko'
+                        email = 'michal.jonko@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:github.com/michaljonko/GuiceLiquibase.git'
+                    developerConnection = 'scm:git:ssh://github.com/michaljonko/GuiceLiquibase.git'
+                    url = 'https://github.com/michaljonko/GuiceLiquibase'
+                }
+            }
         }
     }
 }
 
-bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-    publications = ['GuiceLiquibase']
-    configurations = ['archives']
-    publish = true
-    pkg {
-        repo = 'maven'
-        name = appName
-        desc = 'Guice module for Liquibase to execute DB change sets automatically as a CDI extension'
-        licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/michaljonko/GuiceLiquibase.git'
-        issueTrackerUrl = 'https://github.com/michaljonko/GuiceLiquibase/issues'
-        websiteUrl = 'https://github.com/michaljonko/GuiceLiquibase'
-        githubRepo = 'michaljonko/GuiceLiquibase'
-        githubReleaseNotesFile = 'README.md'
-        labels = ['liquibase', 'db', 'guice', 'cdi']
-        publicDownloadNumbers = true
-        version {
-            name = appVersion
-            desc = "GuiceLiquibase - Liquibase CDI extension for Guice"
-            released = new Date()
-            vcsTag = appVersion
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl = uri("https://s01.oss.sonatype.org/service/local/")
+            snapshotRepositoryUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+            username = project.findProperty('sonatypeUsername') ?: System.getenv("SONATYPE_USER")
+            password = project.findProperty('sonatypePassword') ?: System.getenv("SONATYPE_PASSWORD")
+            stagingProfileId = project.findProperty('sonatypeStagingProfileId') ?: System.getenv("SONATYPE_STAGING_PROFILE_ID")
         }
     }
 }
@@ -98,47 +130,52 @@ repositories {
 }
 
 dependencies {
-    compile group: 'com.google.inject', name: 'guice', version: '5.0.1'
-    compile group: 'org.liquibase', name: 'liquibase-core', version: '4.3.5'
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.32'
+    implementation group: 'com.google.inject', name: 'guice', version: '5.0.1'
+    implementation group: 'org.yaml', name: 'snakeyaml', version: '2.0'
+    implementation group: 'org.liquibase', name: 'liquibase-core', version: '4.20.0'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.9'
 
-    testRuntime group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.32'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
-    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
-    testCompile group: 'org.hsqldb', name: 'hsqldb', version: '2.5.2'
-    testCompile group: 'nl.jqno.equalsverifier', name: 'equalsverifier', version: '3.7.1'
-    testCompile group: 'be.joengenduvel.java.verifiers', name: 'to-string', version: '1.0.2'
-    testCompile group: 'findbugs', name: 'annotations', version: '1.0.0'
+    testRuntimeOnly group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.9'
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: '5.10.0'
+    testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-launcher'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.11.0'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.24.2'
+    testImplementation group: 'org.hsqldb', name: 'hsqldb', version: '2.7.2', classifier: 'jdk8'
+    testImplementation group: 'nl.jqno.equalsverifier', name: 'equalsverifier', version: '3.15.1'
+    testImplementation group: 'com.jparams', name: 'to-string-verifier', version: '1.4.8'
 }
 
-findbugs {
-    ignoreFailures = false
-}
-
-tasks.withType(FindBugs) {
-    reports {
-        xml.enabled false
-        html.enabled true
-    }
+test {
+    useJUnitPlatform()
 }
 
 checkstyle {
-    toolVersion = '7.1.2'
+    toolVersion = '10.12.3'
     ignoreFailures = false
 }
 
 tasks.withType(Checkstyle) {
+    minHeapSize = "128m"
+    maxHeapSize = "256m"
     reports {
-        xml.enabled false
-        html.enabled true
+        xml.required = false
+        html.required = true
     }
 }
 
 pitest {
-    threads = 2
+    threads = 4
+    junit5PluginVersion = '1.2.0'
+    pitestVersion = '1.15.0'
+    mutationThreshold = 85
+    coverageThreshold = 90
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.14'
+spotbugs {
+    showProgress = true
+    maxHeapSize = '256m'
+}
+
+spotbugsTest {
+    enabled = false;
 }

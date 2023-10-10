@@ -1,66 +1,56 @@
-package pl.coffeepower.guiceliquibase;
+package io.github.michaljonko.guiceliquibase;
 
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
-
-import liquibase.resource.ClassLoaderResourceAccessor;
-
-import org.hsqldb.jdbc.JDBCDataSource;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import pl.coffeepower.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
-
+import io.github.michaljonko.guiceliquibase.annotation.GuiceLiquibaseConfiguration;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Set;
 import java.util.UUID;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import org.hsqldb.jdbc.JDBCDataSource;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-@Ignore
-public class Example {
+@Disabled("Integration test - example how to use library")
+class Example {
 
   @SuppressWarnings("checkstyle:javadocmethod")
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    try {
-      Class.forName("org.hsqldb.jdbc.JDBCDriver");
-    } catch (ClassNotFoundException exception) {
-      throw new NoClassDefFoundError("Cannot find org.hsqldb.jdbc.JDBCDriver");
-    }
+  @BeforeAll
+  static void beforeClass() throws ClassNotFoundException {
+    Class.forName("org.hsqldb.jdbc.JDBCDriver");
   }
 
   @Test
-  public void shouldExecuteLiquibaseMigration() throws Exception {
+  void shouldExecuteLiquibaseMigration() throws Exception {
     Injector injector = Guice.createInjector(
         new GuiceLiquibaseModule(), new MyLiquibaseConfigModule());
 
     Set<String> createdTables = getTablesFromDataSource(injector.getInstance(DataSource.class));
-    assertThat(createdTables, hasSize(3));
-    assertThat(createdTables,
-        containsInAnyOrder("DATABASECHANGELOG", "DATABASECHANGELOGLOCK", "EXAMPLE_TABLE"));
+    assertThat(createdTables)
+        .containsExactlyInAnyOrder(
+            "DATABASECHANGELOG",
+            "DATABASECHANGELOGLOCK",
+            "EXAMPLE_TABLE");
   }
 
   private Set<String> getTablesFromDataSource(DataSource dataSource) throws SQLException {
     Set<String> createdTables = Sets.newHashSet();
-    try (Connection connection = dataSource.getConnection()) {
-      try (ResultSet tables = connection.getMetaData()
-          .getTables("PUBLIC", "PUBLIC", null, new String[] {"TABLE"})) {
-        while (tables.next()) {
-          createdTables.add(tables.getString("TABLE_NAME"));
-        }
+    try (Connection connection = dataSource.getConnection();
+        ResultSet tables = connection.getMetaData()
+            .getTables("PUBLIC", "PUBLIC", null, new String[]{"TABLE"})) {
+      while (tables.next()) {
+        createdTables.add(tables.getString("TABLE_NAME"));
       }
     }
     return createdTables;
@@ -76,7 +66,7 @@ public class Example {
     @Provides
     private DataSource createDataSource() {
       JDBCDataSource dataSource = new JDBCDataSource();
-      dataSource.setDatabase("jdbc:hsqldb:mem:" + UUID.randomUUID().toString());
+      dataSource.setDatabase("jdbc:hsqldb:mem:" + UUID.randomUUID());
       dataSource.setUser("SA");
       return dataSource;
     }
