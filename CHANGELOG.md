@@ -1,5 +1,10 @@
 # Changelog
 ---
+
+- #### 0.1.1
+  - Newer version of guava - Guice uses Guava with known vulnerabilities
+  - Fixes in build.gradle to make releases easier
+
 - #### 0.1.0
   - New package for all classes - breaking changes
   - Upgraded to Gradle 7.6.2

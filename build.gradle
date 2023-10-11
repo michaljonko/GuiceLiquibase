@@ -43,18 +43,23 @@ compileJava {
 
 build.dependsOn 'pitest'
 
-task sourcesJar(type: Jar, dependsOn: classes) {
+task sourcesJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
 }
 
-task javadocsJar(type: Jar, dependsOn: javadoc) {
+task javadocJar(type: Jar) {
     classifier = 'javadoc'
-    from javadoc.destinationDir
+    from javadoc
 }
 
 artifacts {
-    archives jar, javadocsJar, sourcesJar
+    archives jar, javadocJar, sourcesJar
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 jar {
@@ -130,7 +135,10 @@ repositories {
 }
 
 dependencies {
-    implementation group: 'com.google.inject', name: 'guice', version: '5.0.1'
+    implementation(group: 'com.google.inject', name: 'guice', version: '5.0.1') {
+        exclude group: 'com.google.guava', module: 'guava'
+    }
+    implementation group: 'com.google.guava', name: 'guava', version: '32.0.1-jre'
     implementation group: 'org.yaml', name: 'snakeyaml', version: '2.0'
     implementation group: 'org.liquibase', name: 'liquibase-core', version: '4.20.0'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.9'
